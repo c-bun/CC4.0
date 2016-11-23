@@ -39,6 +39,7 @@ except:
     raise
 starttime = datetime.now()
 print('Start time: {}'.format(starttime.isoformat()))
+clean_raw_data(full_data) # Set everything below 1E3 to 1E3.
 result = run_multiprocess(full_data, args.dimension, numProcesses = args.processes)
 print("Done! Top five hits:")
 print(result[:5])
