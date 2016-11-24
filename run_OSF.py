@@ -28,6 +28,7 @@ parser.add_argument('-i','--input', help='Input file name as .csv. Compounds in 
 parser.add_argument('-o','--output', help='Output file name as .csv', required=True)
 parser.add_argument('-d','--dimension', help='Dimension of search. Default: 2.', default=2, type=int)
 parser.add_argument('-p','--processes', help='Number of processes to spawn. Default: 1.', default=1, type=int)
+parser.add_argument('-l','--length', help='Length of result list to print to csv. default: 1000.', default=1000, type=int)
 args = parser.parse_args()
 
 # run the script printing start and end times and the top five hits at the end.
@@ -48,6 +49,6 @@ print('End time: {}'.format(endtime.isoformat()))
 print('Total calculation time: {}'.format(str(endtime - starttime)))
 # May have to tweak the .to_csv() arguments to get rid of float formatting of
 # mutant numbers and extra quotes that appear around compounds.
-format_OSF(result).to_csv(args.output, index=False) # Write out result.
+format_OSF(result, list_len=args.length).to_csv(args.output, index=False) # Write out result.
 print('Result saved to {}'.format(args.output))
 #################################################################

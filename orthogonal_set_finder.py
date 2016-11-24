@@ -125,21 +125,26 @@ def run_singleprocess(full_data, dimension):
     result_list = iterate_RMSs(combinations, full_data)
     return sorted(result_list, key=lambda x: x[0])
 
-# When to_csv used, prints compounds in quotes and mutants as floats, this is
-# a bit annoying.
-def format_OSF(sorted_result_list, list_len=100):
+def format_OSF(sorted_result_list, list_len=1000):
     '''
     Takes a result list from run_singleprocess() or run_multiprocess() and
     formats a DataFrame for export with DataFrame.to_csv().
     '''
+    pd.set_option('display.float_format', '{:.2E}'.format) #Forces pandas to use sci-notation.
     working_list = []
     for i in range(list_len):
+        formatted_df = pd.DataFrame(
+            sorted_result_list[i][1], 
+            dtype='float', 
+            columns=map(str,map(int,sorted(sorted_result_list[i][1].columns))),
+            index=map(str,sorted(sorted_result_list[i][1].index))
+        )
         working_list.append([
             i+1,
             sorted_result_list[i][0],
-            ', '.join(map(str,sorted(sorted_result_list[i][1].index))),
-            ', '.join(map(str,sorted(sorted_result_list[i][1].columns))),
-            sorted_result_list[i][1],
+            ', '.join(formatted_df.index),
+            ', '.join(formatted_df.columns),
+            formatted_df,
         ])
     resultDF = pd.DataFrame(working_list, columns=[
             'rank',
