@@ -101,7 +101,7 @@ def check_RMSs(submatrix_indicies, full_data):
     submatrix = get_submatrix(full_data, submatrix_indicies)
     submatrix_normd = normalize_vectors(submatrix)
     orthog_submatrix = submatrix_normd.dot(submatrix_normd.T)
-    result = (RMS_identity(orthog_submatrix), submatrix)
+    result = (RMS_identity(orthog_submatrix), list(submatrix.index), list(submatrix.columns))
     return result
 
 def iterate_RMSs(list_to_process, full_data):
@@ -134,8 +134,8 @@ def format_OSF(sorted_result_list, list_len=1000):
     working_list = []
     for i in range(list_len):
         formatted_df = pd.DataFrame(
-            sorted_result_list[i][1], 
-            dtype='float', 
+            sorted_result_list[i][1],
+            dtype='float',
             columns=map(str,map(int,sorted(sorted_result_list[i][1].columns))),
             index=map(str,sorted(sorted_result_list[i][1].index))
         )

@@ -49,6 +49,6 @@ print('End time: {}'.format(endtime.isoformat()))
 print('Total calculation time: {}'.format(str(endtime - starttime)))
 # May have to tweak the .to_csv() arguments to get rid of float formatting of
 # mutant numbers and extra quotes that appear around compounds.
-format_OSF(result, list_len=args.length).to_csv(args.output, index=False) # Write out result.
+#format_OSF(result, list_len=args.length).to_csv(args.output, index=False) # Write out result.
 print('Result saved to {}'.format(args.output))
 #################################################################
