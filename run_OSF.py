@@ -50,6 +50,6 @@ print('Total calculation time: {}'.format(str(endtime - starttime)))
 # May have to tweak the .to_csv() arguments to get rid of float formatting of
 # mutant numbers and extra quotes that appear around compounds.
 #format_OSF(result, list_len=args.length).to_csv(args.output, index=False) # Write out result.
-result.iloc[:args.length].to_csv(args.output, index=False) # Write out result in slightly less useful way.
+pd.DataFrame(result[:args.length]).to_csv(args.output, index=False) # Write out result in slightly less useful way.
 print('Result saved to {}'.format(args.output))
 #################################################################
