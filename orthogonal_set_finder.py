@@ -112,7 +112,9 @@ def iterate_RMSs(list_to_process, full_data):
     '''
     result_list = []
     for combination in list_to_process:
-        result_list.append(check_RMSs(combination, full_data)) #begin checking RMSs here.
+        rms = check_RMSs(combination, full_data)
+        if rms[0] < .1: # try to reduce amount of memory used.
+            result_list.append(rms)
     return result_list
 
 def run_singleprocess(full_data, dimension):
