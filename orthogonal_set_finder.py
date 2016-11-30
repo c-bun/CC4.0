@@ -113,7 +113,11 @@ def iterate_RMSs(list_to_process, full_data):
     result_list = []
     for combination in list_to_process:
         rms = check_RMSs(combination, full_data)
-        if rms[0] < .1: # try to reduce amount of memory used.
+        if rms[0] < .15:
+        # try to reduce amount of memory used. this value is
+        # arbitrarily defined. RMSs of 0.15 seem to have resolutions that are
+        # ~ in error of current screen methodology. Might be good to have this
+        # as a parameter for the function in the future.
             result_list.append(rms)
     return result_list
 
