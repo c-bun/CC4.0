@@ -140,21 +140,16 @@ def format_OSF(sorted_result_list, full_data, list_len=1000):
     pd.set_option('display.float_format', '{:.2E}'.format) #Forces pandas to use sci-notation.
     working_list = []
     for i in range(list_len):
-        formatted_df = pd.DataFrame(
-            full_data[
-                [sorted_result_list[i][2][0],sorted_result_list[i][2][1]]
-            ].loc[
-                [sorted_result_list[i][1][0],sorted_result_list[i][1][1]]],
-            #dtype='float',
-            columns=map(str, map(int, sorted_result_list[i][1])), #Make sure mutant numbers format correctly
-            index=sorted_result_list[i][2]
-        )
+        subdf = full_data[
+            [sorted_result_list[i][2][0],sorted_result_list[i][2][1]]
+        ].loc[
+            [sorted_result_list[i][1][0],sorted_result_list[i][1][1]]]
         working_list.append([
             i+1,
             sorted_result_list[i][0],
-            ', '.join(formatted_df.index),
-            ', '.join(formatted_df.columns),
-            formatted_df,
+            ', '.join(subdf.index.map(str)),
+            ', '.join(subdf.columns),
+            subdf,
         ])
     resultDF = pd.DataFrame(working_list, columns=[
             'rank',
