@@ -13,7 +13,6 @@ def run_multiprocess(full_data, dimension, numProcesses=2):
     Method to run OSF search in multiple processes simultaneously.
     '''
     if __name__ == '__main__':
-        full_data = full_data.T # For algorithm to work, mutants must be in columns.
         # [ lst[i::n] for i in xrange(n) ] Splits up lst into n segments
         list_of_combinations = [ list(every_matrix(dimension,dimension,full_data))[i::numProcesses] for i in range(numProcesses) ]
         pool = Pool(processes=numProcesses)
@@ -40,16 +39,18 @@ except:
     raise
 starttime = datetime.now()
 print('Start time: {}'.format(starttime.isoformat()))
+# prep the raw data for processing:
+full_data.index = full_data.index.map(int) # Allows m numbers to format properly.
 clean_raw_data(full_data) # Set everything below 1E3 to 1E3.
 result = run_multiprocess(full_data, args.dimension, numProcesses = args.processes)
 print("Done! Top five hits:")
 print(result[:5])
+print("I calculated {} different combinations.".format(str(len(result))))
 endtime = datetime.now()
 print('End time: {}'.format(endtime.isoformat()))
 print('Total calculation time: {}'.format(str(endtime - starttime)))
-# May have to tweak the .to_csv() arguments to get rid of float formatting of
-# mutant numbers and extra quotes that appear around compounds.
-#format_OSF(result, list_len=args.length).to_csv(args.output, index=False) # Write out result.
-pd.DataFrame(result[:args.length]).to_csv(args.output, index=False) # Write out result in slightly less useful way.
+
+format_OSF(result, full_data, list_len=args.length).to_csv(args.output, index=False) # Write out result.
+
 print('Result saved to {}'.format(args.output))
 #################################################################
