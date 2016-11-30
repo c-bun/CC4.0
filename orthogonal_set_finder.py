@@ -45,7 +45,8 @@ def clean_raw_data(pdarray):
 
 def trim_data(data, support):
     """
-    Looks like this will trim a data set to only have the columns of a second set. May still be useful...?
+    Looks like this will trim a data set to only have the columns of a
+    second set. May still be useful...?
     """
     chosen = dict(zip(data.columns, support))
     chosenList = []
@@ -57,7 +58,8 @@ def trim_data(data, support):
 
 def every_matrix(m, n, pandasArray):
     """
-    Accepts a pandas dataframe and returns an iterator with every possible combination of m rows and n columns via an iterator object.
+    Accepts a pandas dataframe and returns an iterator with every possible
+    combination of m rows and n columns via an iterator object.
     """
     index_comb = itertools.combinations(pandasArray.index, m)
     column_comb = itertools.combinations(pandasArray.columns, n)
@@ -66,7 +68,8 @@ def every_matrix(m, n, pandasArray):
 
 def get_submatrix(full_data, combination_tuple):
     """
-    Accepts a tuple from the every_matrix() iterator to return the actual submatrix of the full data (not a copy).
+    Accepts a tuple from the every_matrix() iterator to return the actual
+    submatrix of the full data (not a copy).
     """
     return full_data[list(combination_tuple[1])].loc[list(combination_tuple[0])]
 
@@ -96,12 +99,12 @@ def remove_dim_bands(full_data, threshold):
 def check_RMSs(submatrix_indicies, full_data):
     '''
     Takes a tuple of the required indicies and the full matrix of data.
-    Gets the rms and returns tuple (<RMS>, <DataFrame>).
+    Gets the rms and returns the RMS of the identity matrix as a scalar.
     '''
     submatrix = get_submatrix(full_data, submatrix_indicies)
     submatrix_normd = normalize_vectors(submatrix)
     orthog_submatrix = submatrix_normd.dot(submatrix_normd.T)
-    result = (RMS_identity(orthog_submatrix), submatrix)
+    result = RMS_identity(orthog_submatrix)
     return result
 
 def iterate_RMSs(list_to_process, full_data):
@@ -111,8 +114,12 @@ def iterate_RMSs(list_to_process, full_data):
     associated matrix.
     '''
     result_list = []
-    for combination in list_to_process:
-        result_list.append(check_RMSs(combination, full_data)) #begin checking RMSs here.
+    for combination in list_to_process: #begin checking RMSs here.
+        result_list.append((
+            check_RMSs(combination, full_data),
+            combination[0],
+            combination[1]
+        ))
     return result_list
 
 def run_singleprocess(full_data, dimension):
@@ -125,7 +132,7 @@ def run_singleprocess(full_data, dimension):
     result_list = iterate_RMSs(combinations, full_data)
     return sorted(result_list, key=lambda x: x[0])
 
-def format_OSF(sorted_result_list, list_len=1000):
+def format_OSF(sorted_result_list, full_data, list_len=1000):
     '''
     Takes a result list from run_singleprocess() or run_multiprocess() and
     formats a DataFrame for export with DataFrame.to_csv().
@@ -134,10 +141,13 @@ def format_OSF(sorted_result_list, list_len=1000):
     working_list = []
     for i in range(list_len):
         formatted_df = pd.DataFrame(
-            sorted_result_list[i][1], 
-            dtype='float', 
-            columns=map(str,map(int,sorted(sorted_result_list[i][1].columns))),
-            index=map(str,sorted(sorted_result_list[i][1].index))
+            full_data[
+                [sorted_result_list[i][2][0],sorted_result_list[i][2][1]]
+            ].loc[
+                [sorted_result_list[i][1][0],sorted_result_list[i][1][1]]],
+            #dtype='float',
+            columns=map(str, map(int, sorted_result_list[i][1])), #Make sure mutant numbers format correctly
+            index=sorted_result_list[i][2]
         )
         working_list.append([
             i+1,

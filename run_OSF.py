@@ -13,7 +13,6 @@ def run_multiprocess(full_data, dimension, numProcesses=2):
     Method to run OSF search in multiple processes simultaneously.
     '''
     if __name__ == '__main__':
-        full_data = full_data.T # For algorithm to work, mutants must be in columns.
         # [ lst[i::n] for i in xrange(n) ] Splits up lst into n segments
         list_of_combinations = [ list(every_matrix(dimension,dimension,full_data))[i::numProcesses] for i in range(numProcesses) ]
         pool = Pool(processes=numProcesses)
@@ -49,6 +48,6 @@ print('End time: {}'.format(endtime.isoformat()))
 print('Total calculation time: {}'.format(str(endtime - starttime)))
 # May have to tweak the .to_csv() arguments to get rid of float formatting of
 # mutant numbers and extra quotes that appear around compounds.
-format_OSF(result, list_len=args.length).to_csv(args.output, index=False) # Write out result.
+format_OSF(result, full_data, list_len=args.length).to_csv(args.output, index=False) # Write out result.
 print('Result saved to {}'.format(args.output))
 #################################################################
