@@ -147,8 +147,8 @@ def format_OSF(sorted_result_list, full_data, list_len=1000):
         working_list.append([
             i+1,
             sorted_result_list[i][0],
-            ', '.join(subdf.index.map(str)),
             ', '.join(subdf.columns),
+            ', '.join(subdf.index.map(str)),
             subdf,
         ])
     resultDF = pd.DataFrame(working_list, columns=[

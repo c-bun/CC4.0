@@ -4,3 +4,7 @@
 *.txt
 *.pdf
 *.ipynb
+
+#Some misc config files that get generated
+.DS_Store
+__pycache__/
