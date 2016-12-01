@@ -105,20 +105,29 @@ def check_RMSs(submatrix_indicies, full_data):
     submatrix_normd = normalize_vectors(submatrix)
     orthog_submatrix = submatrix_normd.dot(submatrix_normd.T)
     result = RMS_identity(orthog_submatrix)
+
     return result
 
-def iterate_RMSs(list_to_process, full_data):
+def iterate_RMSs(list_to_process, full_data, threshold=1):
     '''
     Takes a list of tuples of columns and rows to process and the full data
     matrix and iterates through the list, returning the RMS rating and the
-    associated compounds and mutants as a tuple.
+    associated matrix. Specify a threshold of 0.15 to only get things that are
+    within error of the screen.
     '''
     result_list = []
-    for combination in list_to_process: #begin checking RMSs here.
-        result_list.append((
-            check_RMSs(combination, full_data),
-            combination
-        ))
+    for combination in list_to_process:
+        rms = check_RMSs(combination, full_data)
+        if rms < threshold:
+        # try to reduce amount of memory used. this value is
+        # arbitrarily defined. RMSs of 0.15 seem to have resolutions that are
+        # ~ in error of current screen methodology. Might be good to have this
+        # as a parameter for the function in the future.
+            result_list.append((
+                rms,
+                combination
+            ))
+
     return result_list
 
 def run_singleprocess(full_data, dimension):
@@ -138,7 +147,13 @@ def format_OSF(sorted_result_list, full_data, list_len=1000):
     '''
     pd.set_option('display.float_format', '{:.2E}'.format) #Forces pandas to use sci-notation.
     working_list = []
-    for i in range(list_len):
+    # With an RMS threshold it is possible that the desired result list length
+    # is larger than the result list itself.
+    if list_len > len(sorted_result_list):
+        list_range = range(len(sorted_result_list))
+    else:
+        list_range = range(list_len)
+    for i in list_range:
         subdf = full_data[
             list(sorted_result_list[i][1][1]) # Get compounds.
         ].loc[
