@@ -111,14 +111,13 @@ def iterate_RMSs(list_to_process, full_data):
     '''
     Takes a list of tuples of columns and rows to process and the full data
     matrix and iterates through the list, returning the RMS rating and the
-    associated matrix.
+    associated compounds and mutants as a tuple.
     '''
     result_list = []
     for combination in list_to_process: #begin checking RMSs here.
         result_list.append((
             check_RMSs(combination, full_data),
-            combination[0],
-            combination[1]
+            combination
         ))
     return result_list
 
@@ -141,9 +140,10 @@ def format_OSF(sorted_result_list, full_data, list_len=1000):
     working_list = []
     for i in range(list_len):
         subdf = full_data[
-            [sorted_result_list[i][2][0],sorted_result_list[i][2][1]]
+            list(sorted_result_list[i][1][1]) # Get compounds.
         ].loc[
-            [sorted_result_list[i][1][0],sorted_result_list[i][1][1]]]
+            list(sorted_result_list[i][1][0]) # Get mutants.
+        ]
         working_list.append([
             i+1,
             sorted_result_list[i][0],
