@@ -139,6 +139,14 @@ def run_singleprocess(full_data, dimension):
     result_list = iterate_RMSs(combinations, full_data)
     return sorted(result_list, key=lambda x: x[0])
 
+# Under development. Need to make this scalable to any dimension somehow.
+def find_matches(df):
+    '''
+    Gets a dataframe of hit mutants and compounds and returns a properly ordered
+    tuple of the form (c1, m1, c2, m2...).
+    '''
+
+
 def format_OSF(sorted_result_list, full_data, list_len=1000):
     '''
     Takes a result list from run_singleprocess() or run_multiprocess() and

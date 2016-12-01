@@ -1,9 +1,11 @@
 #All data files
 *.csv
 *.xls
+*.xlsx
 *.txt
 *.pdf
 *.ipynb
+*.sh
 
 #Some misc config files that get generated
 .DS_Store
