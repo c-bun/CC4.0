@@ -108,16 +108,17 @@ def check_RMSs(submatrix_indicies, full_data):
 
     return result
 
-def iterate_RMSs(list_to_process, full_data):
+def iterate_RMSs(list_to_process, full_data, threshold=1):
     '''
     Takes a list of tuples of columns and rows to process and the full data
     matrix and iterates through the list, returning the RMS rating and the
-    associated matrix.
+    associated matrix. Specify a threshold of 0.15 to only get things that are
+    within error of the screen.
     '''
     result_list = []
     for combination in list_to_process:
         rms = check_RMSs(combination, full_data)
-        if rms < .15:
+        if rms < threshold:
         # try to reduce amount of memory used. this value is
         # arbitrarily defined. RMSs of 0.15 seem to have resolutions that are
         # ~ in error of current screen methodology. Might be good to have this
