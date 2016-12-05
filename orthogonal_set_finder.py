@@ -159,18 +159,23 @@ def format_OSF(sorted_result_list, full_data, list_len=1000):
         ].loc[
             list(sorted_result_list[i][1][0]) # Get mutants.
         ]
+        pairs = []
+        for column in subdf.columns:
+            row = subdf[column].idxmax()
+            pairs.append(column)
+            pairs.append(row)
         working_list.append([
             i+1,
             sorted_result_list[i][0],
-            ', '.join(subdf.columns),
-            ', '.join(subdf.index.map(str)),
-            subdf,
-        ])
-    resultDF = pd.DataFrame(working_list, columns=[
-            'rank',
-            'RMSd',
-            'compounds',
-            'mutants',
-            'matrix'
-        ])
+            subdf
+        ]+pairs)
+    pairwise_label = ['1','1','2','2','3','3','4','4','5','5'] # should look into actually generating this.
+    cm_label = ['c','m']*subdf.shape[0]
+    fd_labels = ["{}{}".format(cm,p) for cm, p in zip(cm_label, pairwise_label)]
+    columns = [
+                'rank',
+                'RMSd',
+                'matrix'
+    ] + fd_labels
+    resultDF = pd.DataFrame(working_list, columns=columns)
     return resultDF
