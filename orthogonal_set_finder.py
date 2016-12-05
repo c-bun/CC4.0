@@ -154,12 +154,14 @@ def format_OSF(sorted_result_list, full_data, list_len=1000):
     else:
         list_range = range(list_len)
     for i in list_range:
-        subdf = full_data[
-            list(sorted_result_list[i][1][1]) # Get compounds.
-        ].loc[
-            list(sorted_result_list[i][1][0]) # Get mutants.
+        subdf = full_data.loc[
+            sorted(list(sorted_result_list[i][1][0])), # Get mutants.
+            sorted(list(sorted_result_list[i][1][1])) # Get compounds.
         ]
         pairs = []
+        # This is supposed to search for the intended pairs, but it may not
+        # work right when the RMS is so bad that the appropriate pair does
+        # not exist.
         for column in subdf.columns:
             row = subdf[column].idxmax()
             pairs.append(column)
