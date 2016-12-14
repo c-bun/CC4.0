@@ -4,7 +4,8 @@ Created on Thu Oct 27 2016
 
 @author: colinrathbun
 
-Script file to contain all the moving parts for a multithreaded orthogonal set search to be used on the computational cluster or by other users.
+Script file to contain all the moving parts for a multithreaded orthogonal
+set search to be used on the computational cluster or by other users.
 """
 
 # imports
@@ -18,22 +19,28 @@ from itertools import chain
 # setup for plotting. for some reason this does not work right now.
 # matplotlib.style.use('fivethirtyeight')
 
+
 def norm_positives(l):
     """
-    Helper function for the smooth_mat function to allow normalization of only positive values.
+    Helper function for the smooth_mat function to allow normalization of
+    only positive values.
     """
     p = l.copy()
-    p[p<0] = 0
+    p[p < 0] = 0
     total = sum(p)
     return l/total
 
+
 def smooth_mat(unmixed, remove_negatives=False):
     """
-    Takes and unmixed array of correlations and normalizes rows(?) to one, ignoring negative values. remove_negatives will zero the negative values in the row(?).
+    Takes and unmixed array of correlations and normalizes rows(?) to one,
+    ignoring negative values. remove_negatives will zero the negative values
+    in the row(?).
     """
     if remove_negatives:
         unmixed[unmixed < 0] = 0
     return unmixed.apply(norm_positives, axis=1)
+
 
 def clean_raw_data(pdarray):
     """
@@ -41,7 +48,9 @@ def clean_raw_data(pdarray):
     """
     for flux_value in np.nditer(pdarray, op_flags=['readwrite']):
         if flux_value < 1000:
-            flux_value[...] = 1000 #using the elipsis will actually set the value in the array
+            flux_value[...] = 1000  # using the elipsis will actually set the
+            # value in the array
+
 
 def trim_data(data, support):
     """
@@ -51,10 +60,11 @@ def trim_data(data, support):
     chosen = dict(zip(data.columns, support))
     chosenList = []
     for entry in chosen:
-        if chosen[entry] == True:
+        if chosen[entry] is True:
             chosenList.append(entry)
     newData = data[chosenList].copy()
     return newData
+
 
 def every_matrix(m, n, pandasArray):
     """
@@ -66,35 +76,45 @@ def every_matrix(m, n, pandasArray):
     index_column_prod = itertools.product(index_comb, column_comb)
     return index_column_prod
 
+
 def get_submatrix(full_data, combination_tuple):
     """
     Accepts a tuple from the every_matrix() iterator to return the actual
     submatrix of the full data (not a copy).
     """
-    return full_data[list(combination_tuple[1])].loc[list(combination_tuple[0])]
+    return full_data[
+        list(combination_tuple[1])].loc[list(combination_tuple[0])]
+
 
 def RMS_identity(pandasArray):
     """
     Returns the average RMS error of the given matrix from the identity matrix.
     """
-    return np.sqrt(((pandasArray - np.eye(pandasArray.shape[0])) ** 2).values.mean(axis=None))
+    return np.sqrt(((
+        pandasArray - np.eye(pandasArray.shape[0])
+        ) ** 2).values.mean(axis=None))
+
 
 def avg_off_diag_value(npArray):
     np.fill_diagonal(npArray, 0)
     return npArray.mean(axis=None)
 
+
 def normalize_vectors(pandasArray):
     return pandasArray/np.linalg.norm(pandasArray, axis=0)
 
+
 def remove_dim_bands(full_data, threshold):
     """
-    Still need to decide how to implement this. Would potentially filter out low-emitting sets.
+    Still need to decide how to implement this. Would potentially filter
+    out low-emitting sets.
     """
     trimmed_dataframe = full_data.copy()
     for column in full_data:
         if np.max(full_data[column]) < threshold:
             trimmed_dataframe.drop(column)
     return trimmed_dataframe
+
 
 def check_RMSs(submatrix_indicies, full_data):
     '''
@@ -108,6 +128,7 @@ def check_RMSs(submatrix_indicies, full_data):
 
     return result
 
+
 def iterate_RMSs(list_to_process, full_data, threshold=1):
     '''
     Takes a list of tuples of columns and rows to process and the full data
@@ -119,10 +140,10 @@ def iterate_RMSs(list_to_process, full_data, threshold=1):
     for combination in list_to_process:
         rms = check_RMSs(combination, full_data)
         if rms < threshold:
-        # try to reduce amount of memory used. this value is
-        # arbitrarily defined. RMSs of 0.15 seem to have resolutions that are
-        # ~ in error of current screen methodology. Might be good to have this
-        # as a parameter for the function in the future.
+            # try to reduce amount of memory used. this value is
+            # arbitrarily defined. RMSs of 0.15 seem to have resolutions that
+            # are ~ in error of current screen methodology. Might be
+            # good to have this as a parameter for the function in the future.
             result_list.append((
                 rms,
                 combination
@@ -130,10 +151,12 @@ def iterate_RMSs(list_to_process, full_data, threshold=1):
 
     return result_list
 
-def o_score(rms, shape=(2,2)):
+
+def o_score(rms, shape=(2, 2)):
     worst = pd.DataFrame(np.ones(shape))
     worst_RMS = RMS_identity(worst)
     return 2*(worst_RMS/rms)
+
 
 def run_singleprocess(full_data, dimension):
     '''
@@ -141,16 +164,18 @@ def run_singleprocess(full_data, dimension):
     the rows of full_data for this method (not the case for run_multiprocess()
     in run_OSF.py.
     '''
-    combinations = every_matrix(dimension,dimension,full_data)
+    combinations = every_matrix(dimension, dimension, full_data)
     result_list = iterate_RMSs(combinations, full_data)
     return sorted(result_list, key=lambda x: x[0])
+
 
 def format_OSF(sorted_result_list, full_data, list_len=1000):
     '''
     Takes a result list from run_singleprocess() or run_multiprocess() and
     formats a DataFrame for export with DataFrame.to_csv().
     '''
-    pd.set_option('display.float_format', '{:.2E}'.format) #Forces pandas to use sci-notation.
+    pd.set_option('display.float_format', '{:.2E}'.format)  # Forces pandas
+    # to use sci-notation.
     working_list = []
     # With an RMS threshold it is possible that the desired result list length
     # is larger than the result list itself.
@@ -160,8 +185,8 @@ def format_OSF(sorted_result_list, full_data, list_len=1000):
         list_range = range(list_len)
     for i in list_range:
         subdf = full_data.loc[
-            sorted(list(sorted_result_list[i][1][0])), # Get mutants.
-            sorted(list(sorted_result_list[i][1][1])) # Get compounds.
+            sorted(list(sorted_result_list[i][1][0])),  # Get mutants.
+            sorted(list(sorted_result_list[i][1][1]))  # Get compounds.
         ]
         pairs = []
         # This is supposed to search for the intended pairs, but it may not
@@ -176,9 +201,11 @@ def format_OSF(sorted_result_list, full_data, list_len=1000):
             o_score(sorted_result_list[i][0], subdf.shape),
             subdf
         ]+pairs)
-    pairwise_label = ['1','1','2','2','3','3','4','4','5','5'] # should look into actually generating this.
-    cm_label = ['c','m']*subdf.shape[0]
-    fd_labels = ["{}{}".format(cm,p) for cm, p in zip(cm_label, pairwise_label)]
+    pairwise_label = ['1', '1', '2', '2', '3', '3', '4', '4', '5', '5']
+    # should look into actually generating this.
+    cm_label = ['c', 'm']*subdf.shape[0]
+    fd_labels = ["{}{}".format(cm, p) for cm, p in zip(
+        cm_label, pairwise_label)]
     columns = [
                 'rank',
                 'O score',
