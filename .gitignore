@@ -5,6 +5,7 @@
 *.txt
 *.pdf
 *.ipynb
+*.log
 
 #Some misc config files that get generated
 .DS_Store
