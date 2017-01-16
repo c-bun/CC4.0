@@ -28,7 +28,7 @@ def norm_positives(l):
     p = l.copy()
     p[p < 0] = 0
     total = sum(p)
-    return l/total
+    return l / total
 
 
 def smooth_mat(unmixed, remove_negatives=False):
@@ -92,7 +92,7 @@ def RMS_identity(pandasArray):
     """
     return np.sqrt(((
         pandasArray - np.eye(pandasArray.shape[0])
-        ) ** 2).values.mean(axis=None))
+    ) ** 2).values.mean(axis=None))
 
 
 def avg_off_diag_value(npArray):
@@ -101,7 +101,7 @@ def avg_off_diag_value(npArray):
 
 
 def normalize_vectors(pandasArray):
-    return pandasArray/np.linalg.norm(pandasArray, axis=0)
+    return pandasArray / np.linalg.norm(pandasArray, axis=0)
 
 
 def remove_dim_bands(full_data, threshold):
@@ -121,7 +121,7 @@ def check_RMSs(submatrix_indicies, full_data):
     Takes a tuple of the required indicies and the full matrix of data.
     Gets the rms and returns the RMS of the identity matrix as a scalar.
     '''
-    submatrix = get_submatrix(full_data, submatrix_indicies)
+    submatrix = get_submatrix(full_data, submatrix_indicies).T
     submatrix_normd = normalize_vectors(submatrix)
     orthog_submatrix = submatrix_normd.dot(submatrix_normd.T)
     result = RMS_identity(orthog_submatrix)
@@ -155,7 +155,7 @@ def iterate_RMSs(list_to_process, full_data, threshold=1):
 def o_score(rms, shape=(2, 2)):
     worst = pd.DataFrame(np.ones(shape))
     worst_RMS = RMS_identity(worst)
-    return 2*(worst_RMS/rms)
+    return 2 * (worst_RMS / rms)
 
 
 def run_singleprocess(full_data, dimension):
@@ -197,19 +197,19 @@ def format_OSF(sorted_result_list, full_data, list_len=1000):
             pairs.append(column)
             pairs.append(row)
         working_list.append([
-            i+1,
+            i + 1,
             o_score(sorted_result_list[i][0], subdf.shape),
             subdf
-        ]+pairs)
+        ] + pairs)
     pairwise_label = ['1', '1', '2', '2', '3', '3', '4', '4', '5', '5']
     # should look into actually generating this.
-    cm_label = ['c', 'm']*subdf.shape[0]
+    cm_label = ['c', 'm'] * subdf.shape[0]
     fd_labels = ["{}{}".format(cm, p) for cm, p in zip(
         cm_label, pairwise_label)]
     columns = [
-                'rank',
-                'O score',
-                'matrix'
+        'rank',
+        'O score',
+        'matrix'
     ] + fd_labels
     resultDF = pd.DataFrame(working_list, columns=columns)
     return resultDF

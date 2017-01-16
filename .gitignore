@@ -9,3 +9,6 @@
 #Some misc config files that get generated
 .DS_Store
 __pycache__/
+
+#Other folders and paths
+rescreen/
