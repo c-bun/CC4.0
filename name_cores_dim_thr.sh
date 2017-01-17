@@ -21,7 +21,7 @@ python3 ~/data/CC4.0/run_OSF.py -i ${jobname}.csv -o ${jobname_date}.csv -d $d -
 _EOF_
 
 cat temp.sh
-qsub -ckpt blcr -N $jobname_date -q bio,pub64,free* -pe openmp $cores-$cores -m beas temp.sh
+qsub -N $jobname_date -q bio,pub64,free* -pe openmp $cores-$cores -m beas temp.sh
 sleep 5
 rm temp.sh
 echo "---Done---"
