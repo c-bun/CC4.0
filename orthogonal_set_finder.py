@@ -16,9 +16,6 @@ import itertools
 import threading
 from itertools import chain
 
-# setup for plotting. for some reason this does not work right now.
-# matplotlib.style.use('fivethirtyeight')
-
 
 def norm_positives(l):
     """
@@ -28,7 +25,7 @@ def norm_positives(l):
     p = l.copy()
     p[p < 0] = 0
     total = sum(p)
-    return l/total
+    return l / total
 
 
 def smooth_mat(unmixed, remove_negatives=False):
@@ -92,7 +89,7 @@ def RMS_identity(pandasArray):
     """
     return np.sqrt(((
         pandasArray - np.eye(pandasArray.shape[0])
-        ) ** 2).values.mean(axis=None))
+    ) ** 2).values.mean(axis=None))
 
 
 def avg_off_diag_value(npArray):
@@ -101,7 +98,7 @@ def avg_off_diag_value(npArray):
 
 
 def normalize_vectors(pandasArray):
-    return pandasArray/np.linalg.norm(pandasArray, axis=0)
+    return pandasArray / np.linalg.norm(pandasArray, axis=0)
 
 
 def remove_dim_bands(full_data, threshold):
@@ -129,6 +126,12 @@ def check_RMSs(submatrix_indicies, full_data):
     return result
 
 
+def get_rms_from_combination(combination, full_data, threshold):
+    rms = check_RMSs(combination, full_data)
+    if rms < threshold:
+        return (rms, combination)
+
+
 def iterate_RMSs(list_to_process, full_data, threshold=1):
     '''
     Takes a list of tuples of columns and rows to process and the full data
@@ -136,18 +139,8 @@ def iterate_RMSs(list_to_process, full_data, threshold=1):
     associated matrix. Specify a threshold of 0.15 to only get things that are
     within error of the screen.
     '''
-    result_list = []
-    for combination in list_to_process:
-        rms = check_RMSs(combination, full_data)
-        if rms < threshold:
-            # try to reduce amount of memory used. this value is
-            # arbitrarily defined. RMSs of 0.15 seem to have resolutions that
-            # are ~ in error of current screen methodology. Might be
-            # good to have this as a parameter for the function in the future.
-            result_list.append((
-                rms,
-                combination
-            ))
+    result_list = [get_rms_from_combination(
+        combination, full_data, threshold) for combination in list_to_process]
 
     return result_list
 
@@ -155,17 +148,20 @@ def iterate_RMSs(list_to_process, full_data, threshold=1):
 def o_score(rms, shape=(2, 2)):
     worst = pd.DataFrame(np.ones(shape))
     worst_RMS = RMS_identity(worst)
-    return 2*(worst_RMS/rms)
+    return 2 * (worst_RMS / rms)
 
 
-def run_singleprocess(full_data, dimension):
+def run_singleprocess(full_data, dimension, originalIteration=False):
     '''
     Method to run OSF search in one processes for testing. Compounds must be in
     the rows of full_data for this method (not the case for run_multiprocess()
     in run_OSF.py.
     '''
     combinations = every_matrix(dimension, dimension, full_data)
-    result_list = iterate_RMSs(combinations, full_data)
+    if originalIteration:
+        # result_list =
+    else:
+        result_list = iterate_RMSs(combinations, full_data)
     return sorted(result_list, key=lambda x: x[0])
 
 
@@ -197,19 +193,19 @@ def format_OSF(sorted_result_list, full_data, list_len=1000):
             pairs.append(column)
             pairs.append(row)
         working_list.append([
-            i+1,
+            i + 1,
             o_score(sorted_result_list[i][0], subdf.shape),
             subdf
-        ]+pairs)
+        ] + pairs)
     pairwise_label = ['1', '1', '2', '2', '3', '3', '4', '4', '5', '5']
     # should look into actually generating this.
-    cm_label = ['c', 'm']*subdf.shape[0]
+    cm_label = ['c', 'm'] * subdf.shape[0]
     fd_labels = ["{}{}".format(cm, p) for cm, p in zip(
         cm_label, pairwise_label)]
     columns = [
-                'rank',
-                'O score',
-                'matrix'
+        'rank',
+        'O score',
+        'matrix'
     ] + fd_labels
     resultDF = pd.DataFrame(working_list, columns=columns)
     return resultDF
