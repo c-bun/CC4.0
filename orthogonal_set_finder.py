@@ -89,7 +89,7 @@ def iterate_RMSs(list_to_process, full_data, identityMat, threshold=1):
 
 
 def o_score(rms, shape=(2, 2)):
-    worst = pd.DataFrame(np.ones(shape))
+    worst = np.ones(shape)
     worst_RMS = RMS_identity(worst, np.eye(shape[0]))
     return 2 * (worst_RMS / rms)
 
