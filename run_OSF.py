@@ -23,7 +23,11 @@ def run_multiprocess(full_data, dimension, numProcesses=2, threshold=1):
         pool = Pool(processes=numProcesses)
         result_list = pool.starmap(iterate_RMSs, zip(
             list_of_combinations, repeat(full_data_np.copy()), repeat(identityMat), repeat(threshold)))
-        merged = list(chain.from_iterable(result_list))
+        merged = []
+        for sublist in result_list:
+            merged += sublist
+        # merged = list(chain.from_iterable(result_list))
+        # print(merged[0])
         return sorted(merged, key=lambda x: x[0])
 
 #################################################################
