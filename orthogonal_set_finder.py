@@ -83,8 +83,16 @@ def iterate_RMSs(list_to_process, full_data, identityMat, threshold=1):
     associated matrix. Specify a threshold of 0.15 to only get things that are
     within error of the screen.
     '''
-    result_list = [get_rms_from_combination(
-        combination, full_data, threshold, identityMat) for combination in list_to_process]
+    result_list = []
+    for combination in list_to_process:
+        result = get_rms_from_combination(
+            combination, full_data, threshold, identityMat)
+        if result is not None:
+            result_list.append(result)
+
+    # result_list = [get_rms_from_combination(
+    # combination, full_data, threshold, identityMat) for combination in
+    # list_to_process]
     return result_list
 
 
