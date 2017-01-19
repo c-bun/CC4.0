@@ -43,17 +43,12 @@ def get_submatrix(full_data, combination_tuple):
     submatrix of the full data (not a copy).
     """
     return full_data[np.ix_(list(combination_tuple[0]), list(combination_tuple[1]))]
-    # return full_data[
-    #    list(combination_tuple[1])].loc[list(combination_tuple[0])]
 
 
 def RMS_identity(arr, identityMat):
     """
     Returns the average RMS error of the given matrix from the identity matrix.
     """
-    # return sqrt(((
-    #     arr - identityMat
-    # ) ** 2).values.mean(axis=None))
     square_distance = np.power((arr - identityMat), 2)
     return np.sqrt(np.mean(square_distance))
 
@@ -67,10 +62,10 @@ def check_RMSs(submatrix_indicies, full_data, identityMat):
     Takes a tuple of the required indicies and the full matrix of data.
     Gets the rms and returns the RMS of the identity matrix as a scalar.
     '''
-    submatrix = get_submatrix(full_data, submatrix_indicies)  # TODO optimize
+    submatrix = get_submatrix(full_data, submatrix_indicies)
     submatrix_normd = normalize_vectors(submatrix)
     orthog_submatrix = submatrix_normd.dot(submatrix_normd.T)
-    result = RMS_identity(orthog_submatrix, identityMat)  # TODO optimize
+    result = RMS_identity(orthog_submatrix, identityMat)
 
     return result
 
@@ -79,12 +74,6 @@ def get_rms_from_combination(combination, full_data, threshold, identityMat):
     rms = check_RMSs(combination, full_data, identityMat)
     if rms < threshold:
         return (rms, combination)
-
-
-def iterate_RMSs_map(list_to_process, full_data, identityMat, threshold=1):
-    result_list = map(get_rms_from_combination, list_to_process,
-                      repeat(full_data), repeat(threshold), repeat(identityMat))
-    return result_list
 
 
 def iterate_RMSs(list_to_process, full_data, identityMat, threshold=1):
@@ -96,30 +85,6 @@ def iterate_RMSs(list_to_process, full_data, identityMat, threshold=1):
     '''
     result_list = [get_rms_from_combination(
         combination, full_data, threshold, identityMat) for combination in list_to_process]
-
-    return result_list
-
-
-def iterate_RMSs_old(list_to_process, full_data, identityMat, threshold=1):
-    '''
-    Takes a list of tuples of columns and rows to process and the full data
-    matrix and iterates through the list, returning the RMS rating and the
-    associated matrix. Specify a threshold of 0.15 to only get things that are
-    within error of the screen.
-    '''
-    result_list = []
-    for combination in list_to_process:
-        rms = check_RMSs(combination, full_data, identityMat)
-        if rms < threshold:
-            # try to reduce amount of memory used. this value is
-            # arbitrarily defined. RMSs of 0.15 seem to have resolutions that
-            # are ~ in error of current screen methodology. Might be
-            # good to have this as a parameter for the function in the future.
-            result_list.append((
-                rms,
-                combination
-            ))
-
     return result_list
 
 
@@ -129,7 +94,7 @@ def o_score(rms, shape=(2, 2)):
     return 2 * (worst_RMS / rms)
 
 
-def run_singleprocess(full_data, dimension, iterationMethod='map'):
+def run_singleprocess(full_data, dimension):
     '''
     Method to run OSF search in one processes for testing. Compounds must be in
     the rows of full_data for this method (not the case for run_multiprocess()
@@ -138,20 +103,24 @@ def run_singleprocess(full_data, dimension, iterationMethod='map'):
     full_data_np = full_data.values
     combinations = every_matrix(dimension, dimension, full_data)
     identityMat = np.eye(dimension)
-    if iterationMethod == 'for':
-        result_list = iterate_RMSs_old(combinations, full_data_np, identityMat)
-    elif iterationMethod == 'listComp':
-        result_list = iterate_RMSs(combinations, full_data_np, identityMat)
-    elif iterationMethod == 'map':
-        result_list = iterate_RMSs_map(combinations, full_data_np, identityMat)
+    result_list = iterate_RMSs(combinations, full_data_np, identityMat)
     return sorted(result_list, key=lambda x: x[0])
 
 
-def format_OSF(sorted_result_list, full_data, list_len=1000):
+def format_OSF(sorted_result_list_np, full_data, list_len=1000):
     '''
     Takes a result list from run_singleprocess() or run_multiprocess() and
     formats a DataFrame for export with DataFrame.to_csv().
     '''
+    # First, get the numpy back into pandas-readable stuff
+    sorted_result_list = []
+    compounds = full_data.index
+    mutants = full_data.columns
+    for rms, cm_tup in sorted_result_list_np:
+        c = (compounds[pos] for pos in cm_tup[0])
+        m = (mutants[pos] for pos in cm_tup[1])
+        sorted_result_list.append((rms, (c, m)))
+
     pd.set_option('display.float_format', '{:.2E}'.format)  # Forces pandas
     # to use sci-notation.
     working_list = []
