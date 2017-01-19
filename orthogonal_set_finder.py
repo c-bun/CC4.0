@@ -31,8 +31,8 @@ def every_matrix(m, n, pandasArray):
     Accepts a pandas dataframe and returns an iterator with every possible
     combination of m rows and n columns via an iterator object.
     """
-    index_comb = combinations(pandasArray.index, m)
-    column_comb = combinations(pandasArray.columns, n)
+    index_comb = combinations(range(len(pandasArray.index)), m)
+    column_comb = combinations(range(len(pandasArray.columns)), n)
     index_column_prod = product(index_comb, column_comb)
     return index_column_prod
 
@@ -42,20 +42,20 @@ def get_submatrix(full_data, combination_tuple):
     Accepts a tuple from the every_matrix() iterator to return the actual
     submatrix of the full data (not a copy).
     """
-    return full_data.ix[list(combination_tuple[0]), list(combination_tuple[1])]
+    return full_data[np.ix_(list(combination_tuple[0]), list(combination_tuple[1]))]
     # return full_data[
     #    list(combination_tuple[1])].loc[list(combination_tuple[0])]
 
 
-def RMS_identity(pandasArray, identityMat):
+def RMS_identity(arr, identityMat):
     """
     Returns the average RMS error of the given matrix from the identity matrix.
     """
-    return sqrt(((
-        pandasArray - identityMat
-    ) ** 2).values.mean(axis=None))
-    # square_distance = np.power((pandasArray - identityMat), 2)
-    # return np.sqrt(np.mean(square_distance.values))
+    # return sqrt(((
+    #     arr - identityMat
+    # ) ** 2).values.mean(axis=None))
+    square_distance = np.power((arr - identityMat), 2)
+    return np.sqrt(np.mean(square_distance))
 
 
 def normalize_vectors(pandasArray):
@@ -135,14 +135,15 @@ def run_singleprocess(full_data, dimension, iterationMethod='map'):
     the rows of full_data for this method (not the case for run_multiprocess()
     in run_OSF.py.
     '''
+    full_data_np = full_data.values
     combinations = every_matrix(dimension, dimension, full_data)
     identityMat = np.eye(dimension)
     if iterationMethod == 'for':
-        result_list = iterate_RMSs_old(combinations, full_data, identityMat)
+        result_list = iterate_RMSs_old(combinations, full_data_np, identityMat)
     elif iterationMethod == 'listComp':
-        result_list = iterate_RMSs(combinations, full_data, identityMat)
+        result_list = iterate_RMSs(combinations, full_data_np, identityMat)
     elif iterationMethod == 'map':
-        result_list = iterate_RMSs_map(combinations, full_data, identityMat)
+        result_list = iterate_RMSs_map(combinations, full_data_np, identityMat)
     return sorted(result_list, key=lambda x: x[0])
 
 
