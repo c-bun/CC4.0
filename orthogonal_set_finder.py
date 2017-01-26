@@ -151,6 +151,16 @@ def format_OSF(sorted_result_list_np, full_data, list_len=1000):
             row = subdf[column].idxmax()
             pairs.append(column)
             pairs.append(row)
+        # If pairs contains duiplicate rows:
+        # Then just assign pairs and compounds the default order.
+        if len(pairs) != len(set(pairs)):
+            pairs = []
+            c = 0
+            while c < len(subdf.columns):
+                pairs.append(subdf.columns[c])
+                pairs.append(subdf.index[c])
+                c += 1
+
         working_list.append([
             i + 1,
             o_score(sorted_result_list[i][0], subdf.shape),
