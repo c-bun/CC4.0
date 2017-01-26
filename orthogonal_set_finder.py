@@ -11,35 +11,9 @@ set search to be used on the computational cluster or by other users.
 # imports
 import pandas as pd
 import numpy as np
-import matplotlib
-import itertools
-import threading
-from itertools import chain
-
-# setup for plotting. for some reason this does not work right now.
-# matplotlib.style.use('fivethirtyeight')
-
-
-def norm_positives(l):
-    """
-    Helper function for the smooth_mat function to allow normalization of
-    only positive values.
-    """
-    p = l.copy()
-    p[p < 0] = 0
-    total = sum(p)
-    return l/total
-
-
-def smooth_mat(unmixed, remove_negatives=False):
-    """
-    Takes and unmixed array of correlations and normalizes rows(?) to one,
-    ignoring negative values. remove_negatives will zero the negative values
-    in the row(?).
-    """
-    if remove_negatives:
-        unmixed[unmixed < 0] = 0
-    return unmixed.apply(norm_positives, axis=1)
+from numpy import mean, sqrt, eye
+from numpy.linalg import norm
+from itertools import chain, repeat, combinations, product
 
 
 def clean_raw_data(pdarray):
@@ -52,28 +26,14 @@ def clean_raw_data(pdarray):
             # value in the array
 
 
-def trim_data(data, support):
-    """
-    Looks like this will trim a data set to only have the columns of a
-    second set. May still be useful...?
-    """
-    chosen = dict(zip(data.columns, support))
-    chosenList = []
-    for entry in chosen:
-        if chosen[entry] is True:
-            chosenList.append(entry)
-    newData = data[chosenList].copy()
-    return newData
-
-
 def every_matrix(m, n, pandasArray):
     """
     Accepts a pandas dataframe and returns an iterator with every possible
     combination of m rows and n columns via an iterator object.
     """
-    index_comb = itertools.combinations(pandasArray.index, m)
-    column_comb = itertools.combinations(pandasArray.columns, n)
-    index_column_prod = itertools.product(index_comb, column_comb)
+    index_comb = combinations(range(len(pandasArray.index)), m)
+    column_comb = combinations(range(len(pandasArray.columns)), n)
+    index_column_prod = product(index_comb, column_comb)
     return index_column_prod
 
 
@@ -82,41 +42,22 @@ def get_submatrix(full_data, combination_tuple):
     Accepts a tuple from the every_matrix() iterator to return the actual
     submatrix of the full data (not a copy).
     """
-    return full_data[
-        list(combination_tuple[1])].loc[list(combination_tuple[0])]
+    return full_data[np.ix_(list(combination_tuple[0]), list(combination_tuple[1]))]
 
 
-def RMS_identity(pandasArray):
+def RMS_identity(arr, identityMat):
     """
     Returns the average RMS error of the given matrix from the identity matrix.
     """
-    return np.sqrt(((
-        pandasArray - np.eye(pandasArray.shape[0])
-        ) ** 2).values.mean(axis=None))
-
-
-def avg_off_diag_value(npArray):
-    np.fill_diagonal(npArray, 0)
-    return npArray.mean(axis=None)
+    square_distance = np.power((arr - identityMat), 2)
+    return np.sqrt(np.mean(square_distance))
 
 
 def normalize_vectors(pandasArray):
-    return pandasArray/np.linalg.norm(pandasArray, axis=0)
+    return pandasArray / norm(pandasArray, axis=0)
 
 
-def remove_dim_bands(full_data, threshold):
-    """
-    Still need to decide how to implement this. Would potentially filter
-    out low-emitting sets.
-    """
-    trimmed_dataframe = full_data.copy()
-    for column in full_data:
-        if np.max(full_data[column]) < threshold:
-            trimmed_dataframe.drop(column)
-    return trimmed_dataframe
-
-
-def check_RMSs(submatrix_indicies, full_data):
+def check_RMSs(submatrix_indicies, full_data, identityMat):
     '''
     Takes a tuple of the required indicies and the full matrix of data.
     Gets the rms and returns the RMS of the identity matrix as a scalar.
@@ -124,12 +65,18 @@ def check_RMSs(submatrix_indicies, full_data):
     submatrix = get_submatrix(full_data, submatrix_indicies)
     submatrix_normd = normalize_vectors(submatrix)
     orthog_submatrix = submatrix_normd.dot(submatrix_normd.T)
-    result = RMS_identity(orthog_submatrix)
+    result = RMS_identity(orthog_submatrix, identityMat)
 
     return result
 
 
-def iterate_RMSs(list_to_process, full_data, threshold=1):
+def get_rms_from_combination(combination, full_data, threshold, identityMat):
+    rms = check_RMSs(combination, full_data, identityMat)
+    if rms < threshold:
+        return (rms, combination)
+
+
+def iterate_RMSs(list_to_process, full_data, identityMat, threshold=1):
     '''
     Takes a list of tuples of columns and rows to process and the full data
     matrix and iterates through the list, returning the RMS rating and the
@@ -138,24 +85,21 @@ def iterate_RMSs(list_to_process, full_data, threshold=1):
     '''
     result_list = []
     for combination in list_to_process:
-        rms = check_RMSs(combination, full_data)
-        if rms < threshold:
-            # try to reduce amount of memory used. this value is
-            # arbitrarily defined. RMSs of 0.15 seem to have resolutions that
-            # are ~ in error of current screen methodology. Might be
-            # good to have this as a parameter for the function in the future.
-            result_list.append((
-                rms,
-                combination
-            ))
+        result = get_rms_from_combination(
+            combination, full_data, threshold, identityMat)
+        if result is not None:
+            result_list.append(result)
 
+    # result_list = [get_rms_from_combination(
+    # combination, full_data, threshold, identityMat) for combination in
+    # list_to_process]
     return result_list
 
 
 def o_score(rms, shape=(2, 2)):
-    worst = pd.DataFrame(np.ones(shape))
-    worst_RMS = RMS_identity(worst)
-    return 2*(worst_RMS/rms)
+    worst = np.ones(shape)
+    worst_RMS = RMS_identity(worst, np.eye(shape[0]))
+    return 2 * (worst_RMS / rms)
 
 
 def run_singleprocess(full_data, dimension):
@@ -164,16 +108,27 @@ def run_singleprocess(full_data, dimension):
     the rows of full_data for this method (not the case for run_multiprocess()
     in run_OSF.py.
     '''
+    full_data_np = full_data.values
     combinations = every_matrix(dimension, dimension, full_data)
-    result_list = iterate_RMSs(combinations, full_data)
+    identityMat = np.eye(dimension)
+    result_list = iterate_RMSs(combinations, full_data_np, identityMat)
     return sorted(result_list, key=lambda x: x[0])
 
 
-def format_OSF(sorted_result_list, full_data, list_len=1000):
+def format_OSF(sorted_result_list_np, full_data, list_len=1000):
     '''
     Takes a result list from run_singleprocess() or run_multiprocess() and
     formats a DataFrame for export with DataFrame.to_csv().
     '''
+    # First, get the numpy back into pandas-readable stuff
+    sorted_result_list = []
+    compounds = full_data.index
+    mutants = full_data.columns
+    for rms, cm_tup in sorted_result_list_np:
+        c = (compounds[pos] for pos in cm_tup[0])
+        m = (mutants[pos] for pos in cm_tup[1])
+        sorted_result_list.append((rms, (c, m)))
+
     pd.set_option('display.float_format', '{:.2E}'.format)  # Forces pandas
     # to use sci-notation.
     working_list = []
@@ -196,20 +151,30 @@ def format_OSF(sorted_result_list, full_data, list_len=1000):
             row = subdf[column].idxmax()
             pairs.append(column)
             pairs.append(row)
+        # If pairs contains duiplicate rows:
+        # Then just assign pairs and compounds the default order.
+        if len(pairs) != len(set(pairs)):
+            pairs = []
+            c = 0
+            while c < len(subdf.columns):
+                pairs.append(subdf.columns[c])
+                pairs.append(subdf.index[c])
+                c += 1
+
         working_list.append([
-            i+1,
+            i + 1,
             o_score(sorted_result_list[i][0], subdf.shape),
             subdf
-        ]+pairs)
+        ] + pairs)
     pairwise_label = ['1', '1', '2', '2', '3', '3', '4', '4', '5', '5']
     # should look into actually generating this.
-    cm_label = ['c', 'm']*subdf.shape[0]
+    cm_label = ['c', 'm'] * subdf.shape[0]
     fd_labels = ["{}{}".format(cm, p) for cm, p in zip(
         cm_label, pairwise_label)]
     columns = [
-                'rank',
-                'O score',
-                'matrix'
+        'rank',
+        'O score',
+        'matrix'
     ] + fd_labels
     resultDF = pd.DataFrame(working_list, columns=columns)
     return resultDF
