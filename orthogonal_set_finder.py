@@ -104,9 +104,7 @@ def o_score(rms, shape=(2, 2)):
 
 def run_singleprocess(full_data, dimension):
     '''
-    Method to run OSF search in one processes for testing. Compounds must be in
-    the rows of full_data for this method (not the case for run_multiprocess()
-    in run_OSF.py.
+    Method to run OSF search in one processes for testing.
     '''
     full_data_np = full_data.values
     combinations = every_matrix(dimension, dimension, full_data)
