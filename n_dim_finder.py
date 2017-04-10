@@ -2,7 +2,7 @@
 Runs OSF search in the terminal. Requires the orthogonal_set_finder.py file.
 '''
 from orthogonal_set_finder import *
-#from run_OSF import run_multiprocess
+# from run_OSF import run_multiprocess
 import argparse
 from datetime import datetime
 import pandas as pd
@@ -20,7 +20,8 @@ def distill_result_list(full_formatted_list):
 def find_n_dim(result_list_distilled, dim):
     all_combinations = combinations(result_list_distilled, dim)
     n_combinations = factorial(
-        len(result_list_distilled)) / factorial(len(result_list_distilled) - dim)
+        len(result_list_distilled)) / factorial(
+            len(result_list_distilled) - dim)
     expected_edges = (dim * (dim - 1)) / 2
     valid_sets = []
     print("Searching {} sets.".format(n_combinations))
@@ -52,7 +53,7 @@ def sets_are_nodes4(combination, expected_nodes, expected_edges):
     return result1 and result2
 
 
-def testRun(np_result_f, list_len, dim=3, numProcesses=2):
+def find_networks(np_result_f, list_len, dim=3, numProcesses=2):
     distilled = distill_result_list(np_result_f[:list_len])
     result = run_multiprocess_n_dim(distilled, dim, numProcesses)
     return result
@@ -71,9 +72,44 @@ def run_multiprocess(full_data, dimension, numProcesses=2, threshold=1):
         full_data_np = full_data.values
         pool = Pool(processes=numProcesses)
         result_list = pool.starmap(iterate_RMSs, zip(
-            list_of_combinations, repeat(full_data_np.copy()), repeat(identityMat), repeat(threshold)))
+            list_of_combinations, repeat(full_data_np.copy()), repeat(
+                identityMat), repeat(threshold)))
         merged = list(chain.from_iterable(result_list))
         return sorted(merged, key=lambda x: x[0])
+
+
+def get_network_score(edgelist, original_data):
+    compound_inds = []
+    readable_compounds = []
+    mutant_inds = []
+    for rank, edge in edgelist:
+        c1 = edge[0][0]
+        c1i = original_data.columns.get_loc(c1)
+        m1 = edge[0][1]
+        m1i = original_data.index.get_loc(m1)
+        c2 = edge[1][0]
+        c2i = original_data.columns.get_loc(c2)
+        m2 = edge[1][1]
+        m2i = original_data.index.get_loc(m2)
+        compound_inds.extend([c1i, c2i])
+        readable_compounds.extend([c1, c2])
+        mutant_inds.extend([m1i, m2i])
+    compound_inds = set(compound_inds)
+    readable_compounds = set(readable_compounds)
+    mutant_inds = set(mutant_inds)
+    dim = len(mutant_inds)
+    rms = check_RMSs((tuple(mutant_inds), tuple(compound_inds)),
+                     original_data.values, np.eye(dim))
+    score = o_score(rms, (dim, dim))
+    return (score, readable_compounds, mutant_inds)
+
+
+def format_network_result(resultlist, original_data):
+    as_tuples = []
+    for edgelist in resultlist:
+        as_tuples.append(get_network_score(edgelist, original_data))
+    as_tuples = sorted(as_tuples, key=lambda x: x[0], reverse=True)
+    return pd.DataFrame(as_tuples, columns=['Score', 'Substrates', 'Enzymes'])
 
 
 def run_multiprocess_n_dim(full_formatted_list, dim, numProcesses=2):
@@ -84,13 +120,15 @@ def run_multiprocess_n_dim(full_formatted_list, dim, numProcesses=2):
     if __name__ == '__main__':
         all_combinations = combinations(full_formatted_list, dim)
         expected_edges = (dim * (dim - 1)) / 2
-        chunked_list_of_combinations = [list(all_combinations)[i::numProcesses] for i in range(
+        chunked_list_of_combinations = [list(
+            all_combinations)[i::numProcesses] for i in range(
             numProcesses)]
         pool = Pool(processes=numProcesses)
         result_list = pool.starmap(find_n_dim_multiprocess, zip(
             chunked_list_of_combinations, repeat(dim), repeat(expected_edges)))
         merged = list(chain.from_iterable(result_list))
         return merged
+
 
 #################################################################
 # setup parser for accepting arguments from the bash shell
@@ -117,7 +155,7 @@ parser.add_argument('-t', '--threshold',
 args = parser.parse_args()
 
 # run the script printing start and end times and the top five hits at the end.
-print('Running a {}x{} matrix search on {} with {} process(es).'
+print('Running a {}x{} matrix NETWORK search on {} with {} process(es).'
       'Threshold set to {}.'.format(args.dimension, args.dimension, args.input,
                                     args.processes, args.threshold))
 try:
@@ -127,7 +165,6 @@ except:
           "Please check the file/path.".format(args.input))
     raise
 starttime = datetime.now()
-print('Start time: {}'.format(starttime.isoformat()))
 # prep the raw data for processing:
 full_data.index = full_data.index.map(int)  # Allows m numbers to
 # format properly.
@@ -136,20 +173,20 @@ clean_raw_data(full_data)  # Set everything below 1E3 to 1E3.
 result = run_multiprocess(full_data, 2,
                           numProcesses=args.processes,
                           threshold=args.threshold)
-print("Done! Top five hits:")
-print(result[:5])
-print("I found {} combinations.".format(str(len(result))))
+print("I found {} combinations of pairs.".format(str(len(result))))
 endtime = datetime.now()
-print('End time: {}'.format(endtime.isoformat()))
 print('Total calculation time: {}'.format(str(endtime - starttime)))
-
 formatted = format_OSF(result, full_data, list_len=args.length)
-# formatted.to_csv(args.output, index=False)  # Write out result.
+
+# Now take the 2-dimensional run and find higher order networks.
+print("Starting {}-dimensional NETWORK search...".format(args.dimension))
 starttime2 = datetime.now()
-result = testRun(formatted, args.length, args.dimension, args.processes)
+result = find_networks(formatted, args.length, args.dimension, args.processes)
 endtime2 = datetime.now()
-print(result[:10])
+print("Done! I found {} combinations for {} dimensions.".format(
+    str(len(result)), args.dimension))
 print('Total calculation time: {}'.format(str(endtime2 - starttime2)))
 print('Result saved to {}'.format(args.output))
-pd.DataFrame(result).to_csv(args.output, index=False)  # Write out result.
+result_df = format_network_result(result, full_data)
+pd.DataFrame(result_df).to_csv(args.output, index=False)  # Write out result.
 #################################################################

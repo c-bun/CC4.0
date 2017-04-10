@@ -22,9 +22,11 @@ def run_multiprocess(full_data, dimension, numProcesses=2, threshold=1):
         full_data_np = full_data.values
         pool = Pool(processes=numProcesses)
         result_list = pool.starmap(iterate_RMSs, zip(
-            list_of_combinations, repeat(full_data_np.copy()), repeat(identityMat), repeat(threshold)))
+            list_of_combinations, repeat(full_data_np.copy()), repeat(
+                identityMat), repeat(threshold)))
         merged = list(chain.from_iterable(result_list))
         return sorted(merged, key=lambda x: x[0])
+
 
 #################################################################
 # setup parser for accepting arguments from the bash shell

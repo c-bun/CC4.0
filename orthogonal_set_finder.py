@@ -42,7 +42,8 @@ def get_submatrix(full_data, combination_tuple):
     Accepts a tuple from the every_matrix() iterator to return the actual
     submatrix of the full data (not a copy).
     """
-    return full_data[np.ix_(list(combination_tuple[0]), list(combination_tuple[1]))]
+    return full_data[np.ix_(list(combination_tuple[0]), list(
+        combination_tuple[1]))]
 
 
 def RMS_identity(arr, identityMat):
