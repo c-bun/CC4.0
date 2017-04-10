@@ -53,8 +53,8 @@ def sets_are_nodes4(combination, expected_nodes, expected_edges):
     return result1 and result2
 
 
-def find_networks(np_result_f, list_len, dim=3, numProcesses=2):
-    distilled = distill_result_list(np_result_f[:list_len])
+def find_networks(np_result_f, dim=3, numProcesses=2):
+    distilled = distill_result_list(np_result_f)
     result = run_multiprocess_n_dim(distilled, dim, numProcesses)
     return result
 
@@ -108,8 +108,8 @@ def format_network_result(resultlist, original_data):
     as_tuples = []
     for edgelist in resultlist:
         as_tuples.append(get_network_score(edgelist, original_data))
-    as_tuples = sorted(as_tuples, key=lambda x: x[0], reverse=True)
-    return pd.DataFrame(as_tuples, columns=['Score', 'Substrates', 'Enzymes'])
+    as_tuples_sorted = sorted(as_tuples, key=lambda x: x[0], reverse=True)
+    return pd.DataFrame(as_tuples_sorted, columns=['Score', 'Substrates', 'Enzymes'])
 
 
 def run_multiprocess_n_dim(full_formatted_list, dim, numProcesses=2):
@@ -118,11 +118,13 @@ def run_multiprocess_n_dim(full_formatted_list, dim, numProcesses=2):
     in multiple processes simultaneously.
     '''
     if __name__ == '__main__':
-        all_combinations = combinations(full_formatted_list, dim)
+        all_combinations = list(combinations(full_formatted_list, dim))
+
         expected_edges = (dim * (dim - 1)) / 2
-        chunked_list_of_combinations = [list(
-            all_combinations)[i::numProcesses] for i in range(
-            numProcesses)]
+        chunked_list_of_combinations = [
+            all_combinations[i::numProcesses] for i in range(
+                numProcesses)]
+
         pool = Pool(processes=numProcesses)
         result_list = pool.starmap(find_n_dim_multiprocess, zip(
             chunked_list_of_combinations, repeat(dim), repeat(expected_edges)))
@@ -181,7 +183,7 @@ formatted = format_OSF(result, full_data, list_len=args.length)
 # Now take the 2-dimensional run and find higher order networks.
 print("Starting {}-dimensional NETWORK search...".format(args.dimension))
 starttime2 = datetime.now()
-result = find_networks(formatted, args.length, args.dimension, args.processes)
+result = find_networks(formatted, args.dimension, args.processes)
 endtime2 = datetime.now()
 print("Done! I found {} combinations for {} dimensions.".format(
     str(len(result)), args.dimension))
