@@ -82,6 +82,7 @@ def get_network_score(edgelist, original_data):
     compound_inds = []
     readable_compounds = []
     mutant_inds = []
+    readable_mutants = []
     for rank, edge in edgelist:
         c1 = edge[0][0]
         c1i = original_data.columns.get_loc(c1)
@@ -94,14 +95,16 @@ def get_network_score(edgelist, original_data):
         compound_inds.extend([c1i, c2i])
         readable_compounds.extend([c1, c2])
         mutant_inds.extend([m1i, m2i])
+        readable_mutants.extend([m1, m2])
     compound_inds = set(compound_inds)
     readable_compounds = set(readable_compounds)
     mutant_inds = set(mutant_inds)
+    readable_mutants = set(readable_mutants)
     dim = len(mutant_inds)
-    rms = check_RMSs((tuple(mutant_inds), tuple(compound_inds)),
-                     original_data.values, np.eye(dim))
+    rms = check_RMSs((tuple(mutant_inds), tuple(
+        compound_inds)), original_data.values, np.eye(dim))
     score = o_score(rms, (dim, dim))
-    return (score, readable_compounds, mutant_inds)
+    return (score, readable_compounds, readable_mutants)
 
 
 def format_network_result(resultlist, original_data):
