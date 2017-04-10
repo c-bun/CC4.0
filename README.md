@@ -1,8 +1,8 @@
-# CC4.0
+# CrossCompare
 Cross-compare script with rewritten algorithm. Able to execute in more than one process.
 
-### What is CC?
-CC stands for cross-compare. It's a python script originally written to empirically evaluate datasets for optimally orthogonal submatricies. Data is read in from ``.csv`` files and can be processed on multiple threads using python's ``multiprocessing`` module. For large datasets or submatrix dimensions (>2) it is advisable to use a supercomputing cluster to run this algorithm.
+### What is CrossCompare?
+CrossCompare is a python script originally written to empirically search datasets for optimally orthogonal submatricies. Data is read in from ``.csv`` files and can be processed on multiple threads using python's ``multiprocessing`` module. For large datasets or submatrix dimensions (>2) it is advisable to use a supercomputing cluster to run this algorithm.
 
 ### Dependencies
 The following must be installed in order for the code to run properly:  
@@ -51,3 +51,6 @@ The script will print what it is doing into the terminal and create a ``.csv`` i
 For a 3 dimensional run with a file called ``dataset.csv``, on a computer with 8 cores, one may use:
 
 ``python3 run_OSF.py -i "dataset.csv" -o "dataset_out.csv" -d 3 -t 0.1 -p 8``
+
+### 04/10/2017 Update
+Added the ability to search for dimensions >2 much faster. Documentation coming in the future for these features.
