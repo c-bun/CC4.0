@@ -7,6 +7,23 @@ from datetime import datetime
 import pandas as pd
 from multiprocessing import Pool
 from itertools import repeat, chain
+from sys import getsizeof
+
+
+def buffer_generator(generator, buffer_length):
+    '''
+    Generator to buffer a longer generator into chunks that can be distributed
+    to child processes.
+    '''
+    more_values = True  # So long as generator starts out with values.
+    while more_values:
+        sublist = []
+        for c in range(buffer_length):
+            try:
+                sublist.append(next(generator))
+            except StopIteration:
+                more_values = False
+        yield sublist
 
 
 def run_multiprocess(full_data, dimension, numProcesses=2, threshold=1):
@@ -14,18 +31,24 @@ def run_multiprocess(full_data, dimension, numProcesses=2, threshold=1):
     Method to run OSF search in multiple processes simultaneously.
     '''
     if __name__ == '__main__':
-        # [ lst[i::n] for i in xrange(n) ] Splits up lst into n segments
-        list_of_combinations = [list(every_matrix(
-            dimension, dimension, full_data))[i::numProcesses] for i in range(
-            numProcesses)]
+        buffer_list = buffer_generator(every_matrix(
+            dimension, dimension, full_data), 1000)
+        print("Size of buffer_list: {}".format(getsizeof(buffer_list)))
+        pool = Pool(processes=numProcesses)
         identityMat = np.eye(dimension)
         full_data_np = full_data.values
-        pool = Pool(processes=numProcesses)
-        result_list = pool.starmap(iterate_RMSs, zip(
-            list_of_combinations, repeat(full_data_np.copy()), repeat(
-                identityMat), repeat(threshold)))
-        merged = list(chain.from_iterable(result_list))
-        return sorted(merged, key=lambda x: x[0])
+        compiled_chunks = []
+        for chunk in buffer_list:
+            list_of_combinations = [chunk[i::numProcesses] for i in range(
+                numProcesses)]
+            print("Size of list_of_combinations: {}".format(
+                getsizeof(list_of_combinations)))
+            result_list = pool.starmap(iterate_RMSs, zip(
+                list_of_combinations, repeat(full_data_np.copy()), repeat(
+                    identityMat), repeat(threshold)))
+            merged_pool = list(chain.from_iterable(result_list))
+            compiled_chunks.extend(merged_pool)
+        return sorted(compiled_chunks, key=lambda x: x[0])
 
 
 #################################################################
