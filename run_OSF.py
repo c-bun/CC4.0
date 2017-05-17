@@ -32,7 +32,7 @@ def run_multiprocess(full_data, dimension, numProcesses=2, threshold=1):
     '''
     if __name__ == '__main__':
         buffer_list = buffer_generator(every_matrix(
-            dimension, dimension, full_data), 1000)
+            dimension, dimension, full_data), 100000)
         print("Size of buffer_list: {}".format(getsizeof(buffer_list)))
         pool = Pool(processes=numProcesses)
         identityMat = np.eye(dimension)
@@ -41,8 +41,8 @@ def run_multiprocess(full_data, dimension, numProcesses=2, threshold=1):
         for chunk in buffer_list:
             list_of_combinations = [chunk[i::numProcesses] for i in range(
                 numProcesses)]
-            print("Size of list_of_combinations: {}".format(
-                getsizeof(list_of_combinations)))
+            print("Size of chunk: {}".format(
+                getsizeof(chunk)))
             result_list = pool.starmap(iterate_RMSs, zip(
                 list_of_combinations, repeat(full_data_np.copy()), repeat(
                     identityMat), repeat(threshold)))
