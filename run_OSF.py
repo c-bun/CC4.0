@@ -26,14 +26,14 @@ def buffer_generator(generator, buffer_length):
         yield sublist
 
 
-def run_multiprocess(full_data, dimension, numProcesses=2, threshold=1):
+def run_multiprocess(full_data, dimension, numProcesses=2, threshold=1, buffer_length=1000000):
     '''
     Method to run OSF search in multiple processes simultaneously.
     '''
     if __name__ == '__main__':
         buffer_list = buffer_generator(every_matrix(
-            dimension, dimension, full_data), 100000)
-        print("Size of buffer_list: {}".format(getsizeof(buffer_list)))
+            dimension, dimension, full_data), buffer_length)
+        # print("Size of buffer_list: {}".format(getsizeof(buffer_list)))
         pool = Pool(processes=numProcesses)
         identityMat = np.eye(dimension)
         full_data_np = full_data.values
@@ -41,8 +41,7 @@ def run_multiprocess(full_data, dimension, numProcesses=2, threshold=1):
         for chunk in buffer_list:
             list_of_combinations = [chunk[i::numProcesses] for i in range(
                 numProcesses)]
-            print("Size of chunk: {}".format(
-                getsizeof(chunk)))
+            # print("Size of chunk: {}".format(getsizeof(chunk)))
             result_list = pool.starmap(iterate_RMSs, zip(
                 list_of_combinations, repeat(full_data_np.copy()), repeat(
                     identityMat), repeat(threshold)))
@@ -73,12 +72,20 @@ parser.add_argument('-t', '--threshold',
                     help='Number below which RMSs should be kept. Setting to a'
                     'lower number (0.15) reduces memory usage for larger'
                     'dimension searches. default: 1.', default=1, type=float)
+parser.add_argument('-b', '--buffer_length',
+                    help='Length of list to buffer into memory. Should be'
+                    'larger when using more processes. default: 1E6.',
+                    default=1000000, type=int)
+parser.add_argument('-e', '--time_testing',
+                    help='Use to test speed of algorithm. Restricts printed'
+                    ' and csv output. default: off', action='store_true')
 args = parser.parse_args()
 
 # run the script printing start and end times and the top five hits at the end.
-print('Running a {}x{} matrix search on {} with {} process(es).'
-      'Threshold set to {}.'.format(args.dimension, args.dimension, args.input,
-                                    args.processes, args.threshold))
+if not args.time_testing:
+    print('Running a {}x{} matrix search on {} with {} process(es).'
+          'Threshold set to {}.'.format(args.dimension, args.dimension, args.input,
+                                        args.processes, args.threshold))
 try:
     full_data = pd.read_csv(args.input, index_col=0, dtype='float64')
 except:
@@ -86,7 +93,8 @@ except:
           "Please check the file/path.".format(args.input))
     raise
 starttime = datetime.now()
-print('Start time: {}'.format(starttime.isoformat()))
+if not args.time_testing:
+    print('Start time: {}'.format(starttime.isoformat()))
 # prep the raw data for processing:
 full_data.index = full_data.index.map(int)  # Allows m numbers to
 # format properly.
@@ -94,17 +102,18 @@ clean_raw_data(full_data)  # Set everything below 1E3 to 1E3.
 # Start the algorithm.
 result = run_multiprocess(full_data, args.dimension,
                           numProcesses=args.processes,
-                          threshold=args.threshold)
-print("Done! Top five hits:")
-print(result[:5])
-print("I found {} combinations.".format(str(len(result))))
+                          threshold=args.threshold, buffer_length=args.buffer_length)
 endtime = datetime.now()
-print('End time: {}'.format(endtime.isoformat()))
+if not args.time_testing:
+    print("Done! Top five hits:")
+    print(result[:5])
+    print("I found {} combinations.".format(str(len(result))))
+    print('End time: {}'.format(endtime.isoformat()))
 print('Total calculation time: {}'.format(str(endtime - starttime)))
 
-format_OSF(result, full_data,
-           list_len=args.length).to_csv(args.output,
-                                        index=False)  # Write out result.
-
-print('Result saved to {}'.format(args.output))
+if not args.time_testing:
+    format_OSF(result, full_data,
+               list_len=args.length).to_csv(args.output,
+                                            index=False)  # Write out result.
+    print('Result saved to {}'.format(args.output))
 #################################################################
