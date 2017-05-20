@@ -26,14 +26,14 @@ def buffer_generator(generator, buffer_length):
         yield sublist
 
 
-def run_multiprocess(full_data, dimension, numProcesses=2, threshold=1, buffer_length=1000000):
+def run_multiprocess(full_data, dimension, numProcesses=2, threshold=1,
+                     buffer_length=1000000):
     '''
     Method to run OSF search in multiple processes simultaneously.
     '''
     if __name__ == '__main__':
         buffer_list = buffer_generator(every_matrix(
             dimension, dimension, full_data), buffer_length)
-        # print("Size of buffer_list: {}".format(getsizeof(buffer_list)))
         pool = Pool(processes=numProcesses)
         identityMat = np.eye(dimension)
         full_data_np = full_data.values
@@ -41,7 +41,6 @@ def run_multiprocess(full_data, dimension, numProcesses=2, threshold=1, buffer_l
         for chunk in buffer_list:
             list_of_combinations = [chunk[i::numProcesses] for i in range(
                 numProcesses)]
-            # print("Size of chunk: {}".format(getsizeof(chunk)))
             result_list = pool.starmap(iterate_RMSs, zip(
                 list_of_combinations, repeat(full_data_np.copy()), repeat(
                     identityMat), repeat(threshold)))
@@ -84,8 +83,9 @@ args = parser.parse_args()
 # run the script printing start and end times and the top five hits at the end.
 if not args.time_testing:
     print('Running a {}x{} matrix search on {} with {} process(es).'
-          'Threshold set to {}.'.format(args.dimension, args.dimension, args.input,
-                                        args.processes, args.threshold))
+          'Threshold set to {}.'.format(args.dimension, args.dimension,
+                                        args.input, args.processes,
+                                        args.threshold))
 try:
     full_data = pd.read_csv(args.input, index_col=0, dtype='float64')
 except:
@@ -102,7 +102,8 @@ clean_raw_data(full_data)  # Set everything below 1E3 to 1E3.
 # Start the algorithm.
 result = run_multiprocess(full_data, args.dimension,
                           numProcesses=args.processes,
-                          threshold=args.threshold, buffer_length=args.buffer_length)
+                          threshold=args.threshold,
+                          buffer_length=args.buffer_length)
 endtime = datetime.now()
 if not args.time_testing:
     print("Done! Top five hits:")
