@@ -1,11 +1,11 @@
 #All data files
-*.csv
-*.xls
-*.xlsx
-*.txt
-*.pdf
-*.ipynb
-*.log
+#*.csv
+#*.xls
+#*.xlsx
+#*.txt
+#*.pdf
+#*.ipynb
+#*.log
 
 #Some misc config files that get generated
 .DS_Store
@@ -13,3 +13,5 @@ __pycache__/
 
 #Files and Paths
 rescreen/
+misc_scratch_data/
+.ipynb_checkpoints/
