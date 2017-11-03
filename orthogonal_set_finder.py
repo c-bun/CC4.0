@@ -14,6 +14,9 @@ import numpy as np
 from numpy import mean, sqrt, eye
 from numpy.linalg import norm
 from itertools import chain, repeat, combinations, product
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({'legend.fontsize': 6})  # make legends format smaller
 
 
 def clean_raw_data(pdarray):
@@ -155,6 +158,20 @@ def run_singleprocess_fxn(full_data, dimension, fxn):
     #identityMat = np.eye(dimension)
     result_list = iterate_with_fxn(combinations, full_data_np, fxn)
     return sorted(result_list, key=lambda x: x[0])
+
+
+def plot_top_x(sorted_result_list_np, full_data, x=3, filename='test.png'):
+    '''
+    Plot top x number in the list and save as a png.
+    '''
+    fig, axs = plt.subplots(1, x)
+    c = 0
+    for row in sorted_result_list_np[:x]:
+        full_data.iloc[list(row[1][0]),
+                       list(row[1][1])].plot(ax=axs[c], kind='bar', logy=True,
+                                             legend=True)
+        c += 1
+    fig.savefig(filename)
 
 
 def format_OSF(sorted_result_list_np, full_data, list_len=1000):

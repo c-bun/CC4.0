@@ -87,6 +87,9 @@ parser.add_argument('-f', '--svd',
 parser.add_argument('-e', '--time_testing',
                     help='Use to test speed of algorithm. Restricts printed'
                     ' and csv output. default: off', action='store_true')
+parser.add_argument('-j', '--output_plot',
+                    help='Outputs top 3 hits as barplots. Specify filename with'
+                    '-o tag. default: off', action='store_true')
 args = parser.parse_args()
 
 # run the script printing start and end times and the top five hits at the end.
@@ -121,9 +124,11 @@ if not args.time_testing:
     print('End time: {}'.format(endtime.isoformat()))
 print('Total calculation time: {}'.format(str(endtime - starttime)))
 
-if not args.time_testing:
+if not (args.time_testing or args.output_plot):
     format_OSF(result, full_data,
                list_len=args.length).to_csv(args.output,
                                             index=False)  # Write out result.
+elif args.output_plot:
+    plot_top_x(result, full_data, filename=args.output)
     print('Result saved to {}'.format(args.output))
 #################################################################
