@@ -30,6 +30,8 @@ def every_matrix(m, n, pandasArray):
     """
     Accepts a pandas dataframe and returns an iterator with every possible
     combination of m rows and n columns via an iterator object.
+
+    TODO m,n should be represented in a tuple in the future.
     """
     index_comb = combinations(range(len(pandasArray.index)), m)
     column_comb = combinations(range(len(pandasArray.columns)), n)
@@ -71,6 +73,20 @@ def check_RMSs(submatrix_indicies, full_data, identityMat):
     return result
 
 
+def check_RMSs_from_submatrix(submatrix):
+    '''
+    Takes a submatrix and returns the rmsd from the identity matrix.
+
+    TODO: Check whether generating a new identity matrix every time is costly.
+    '''
+    identityMat = np.eye(submatrix.shape[0])
+    submatrix_normd = normalize_vectors(submatrix)
+    orthog_submatrix = submatrix_normd.dot(submatrix_normd.T)
+    result = RMS_identity(orthog_submatrix, identityMat)
+
+    return result
+
+
 def get_rms_from_combination(combination, full_data, threshold, identityMat):
     rms = check_RMSs(combination, full_data, identityMat)
     if rms < threshold:
@@ -97,6 +113,20 @@ def iterate_RMSs(list_to_process, full_data, identityMat, threshold=1):
     return result_list
 
 
+def iterate_with_fxn(list_to_process, full_data, fxn):
+    '''
+    Similar to iterate_RMSs, except able to utilize any function that outputs
+    a scalar value for each combination in the data.
+    '''
+    result_list = []
+    for combination in list_to_process:
+        submatrix = get_submatrix(full_data, combination)
+        result = (fxn(submatrix), combination)
+        if result is not None:
+            result_list.append(result)
+    return result_list
+
+
 def o_score(rms, shape=(2, 2)):
     worst = np.ones(shape)
     worst_RMS = RMS_identity(worst, np.eye(shape[0]))
@@ -111,6 +141,19 @@ def run_singleprocess(full_data, dimension):
     combinations = every_matrix(dimension, dimension, full_data)
     identityMat = np.eye(dimension)
     result_list = iterate_RMSs(combinations, full_data_np, identityMat)
+    return sorted(result_list, key=lambda x: x[0])
+
+
+def run_singleprocess_fxn(full_data, dimension, fxn):
+    '''
+    Method to run OSF search in one processes for testing. Takes dimension as a
+    tuple and a function object to define what operation should be used on the
+    input data.
+    '''
+    full_data_np = full_data.values
+    combinations = every_matrix(dimension[0], dimension[1], full_data)
+    #identityMat = np.eye(dimension)
+    result_list = iterate_with_fxn(combinations, full_data_np, fxn)
     return sorted(result_list, key=lambda x: x[0])
 
 

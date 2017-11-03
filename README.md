@@ -47,7 +47,7 @@ The script will print what it is doing into the terminal and create a ``.csv`` i
 
 ``[-t THRESHOLD]`` RMS threshold to keep for the sorted list. Specifying this tag is often necessary for larger searches (>2 dimensions or larger datasets) to reduce memory usage. Setting this to 0.15 reduced our memory usage adequately. Default: 1.
 
-**Optimizing Memory Use:**
+**Optimizing Memory Use:**  
 ``[-b BUFFER_LENGTH]`` Only important with large datasets. Use to adjust the length of the list that is split among the processors. If using many processors, increase this number. If low on RAM, decrease this number. A value of 1,000,000 works well with 32--64 processors. Default: 1000000.
 
 **Example input:**  
