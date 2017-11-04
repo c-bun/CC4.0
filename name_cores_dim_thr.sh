@@ -18,7 +18,7 @@ echo "full call: "
 cat << _EOF_ > temp.sh
 #!/bin/bash
 
-python3 ~/data/CrossCompare/run_OSF.py -i ${jobname}.csv -o ${jobname_date}.png -m $dm -n $dn -p $pcores -l 10000 -t $t -j -f \
+python3 ~/data/CrossCompare/run_OSF.py -i ${jobname}.csv -o ${jobname_date}.pkl -m $dm -n $dn -p $pcores -l 10000 -t $t -k -f \
 > ${jobname_date}.log
 _EOF_
 
