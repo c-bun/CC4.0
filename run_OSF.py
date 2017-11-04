@@ -9,6 +9,7 @@ import numpy as np
 from multiprocessing import Pool
 from itertools import repeat, chain
 from sys import getsizeof
+import pickle
 
 
 def buffer_generator(generator, buffer_length):
@@ -90,6 +91,9 @@ parser.add_argument('-e', '--time_testing',
 parser.add_argument('-j', '--output_plot',
                     help='Outputs top 3 hits as barplots. Specify filename with'
                     '-o tag. default: off', action='store_true')
+parser.add_argument('-k', '--pickle',
+                    help='Outputs the result as a pickled file with name as'
+                    'specified in -o tag. default: off', action='store_true')
 args = parser.parse_args()
 
 # run the script printing start and end times and the top five hits at the end.
@@ -124,11 +128,14 @@ if not args.time_testing:
     print('End time: {}'.format(endtime.isoformat()))
 print('Total calculation time: {}'.format(str(endtime - starttime)))
 
-if not (args.time_testing or args.output_plot):
+if not (args.time_testing or args.output_plot or args.pickle):
     format_OSF(result, full_data,
                list_len=args.length).to_csv(args.output,
                                             index=False)  # Write out result.
 elif args.output_plot:
     plot_top_x(result, full_data, filename=args.output)
+elif args.pickle:
+    with open(args.output, 'wb') as f:
+        pickle.dump(result, f)
     print('Result saved to {}'.format(args.output))
 #################################################################
