@@ -136,6 +136,6 @@ elif args.output_plot:
     plot_top_x(result, full_data, filename=args.output)
 elif args.pickle:
     with open(args.output, 'wb') as f:
-        pickle.dump(result, f)
+        pickle.dump(result[:args.length], f)
     print('Result saved to {}'.format(args.output))
 #################################################################

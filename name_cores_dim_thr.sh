@@ -7,7 +7,7 @@ dm=$3 # M Dimensions
 dn=$4 # N Dimensions
 t=$5 # Threshold
 
-jobname_date="$jobname-c$cores-d$d-t$t-$(date +%Y%m%d).$(date +%H%M)"
+jobname_date="$jobname-c$cores-d$dm$dn-t$t-$(date +%Y%m%d).$(date +%H%M)"
 
 echo "---Submitted as---"
 echo "Name: $jobname_date"
