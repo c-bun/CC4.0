@@ -28,14 +28,17 @@ def buffer_generator(generator, buffer_length):
         yield sublist
 
 
-def run_multiprocess(full_data, dimension, fxn=check_RMSs_from_submatrix, numProcesses=2, threshold=1,
-                     buffer_length=1000000):
+def run_multiprocess(full_data, dimension, fxn=check_RMSs_from_submatrix,
+                     numProcesses=2, threshold=1, buffer_length=1000000,
+                     seq_addition=False):
     '''
     Method to run OSF search in multiple processes simultaneously.
     '''
     if __name__ == '__main__':
+        if seq_addition:
+            fxn = check_RMSs_with_seq_addn
         buffer_list = buffer_generator(every_matrix(
-            dimension[0], dimension[1], full_data), buffer_length)
+            dimension[0], dimension[1], full_data, seq_addition=seq_addition), buffer_length)
         pool = Pool(processes=numProcesses)
         #identityMat = np.eye(dimension)
         full_data_np = full_data.values
@@ -94,6 +97,9 @@ parser.add_argument('-j', '--output_plot',
 parser.add_argument('-k', '--pickle',
                     help='Outputs the result as a pickled file with name as'
                     'specified in -o tag. default: off', action='store_true')
+parser.add_argument('-s', '--seq_addition',
+                    help='Simulates sequential addition of compounds (columns)',
+                    action='store_true')
 args = parser.parse_args()
 
 # run the script printing start and end times and the top five hits at the end.
@@ -119,7 +125,8 @@ clean_raw_data(full_data)  # Set everything below 1E3 to 1E3.
 result = run_multiprocess(full_data, (args.m_dimension, args.n_dimension),
                           numProcesses=args.processes,
                           threshold=args.threshold,
-                          buffer_length=args.buffer_length, fxn=args.svd)
+                          buffer_length=args.buffer_length, fxn=args.svd,
+                          seq_addition=args.seq_addition)
 endtime = datetime.now()
 if not args.time_testing:
     print("Done! Top five hits:")

@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 from numpy import mean, sqrt, eye
 from numpy.linalg import norm
-from itertools import chain, repeat, combinations, product
+from itertools import chain, repeat, combinations, product, permutations
 import matplotlib.pyplot as plt
 
 plt.rcParams.update({'legend.fontsize': 6})  # make legends format smaller
@@ -29,15 +29,19 @@ def clean_raw_data(pdarray):
             # value in the array
 
 
-def every_matrix(m, n, pandasArray):
+def every_matrix(m, n, pandasArray, seq_addition=False):
     """
     Accepts a pandas dataframe and returns an iterator with every possible
-    combination of m rows and n columns via an iterator object.
+    combination of m rows and n columns via an iterator object. The seq_addition
+    switch will output every possible compound addition order.
 
     TODO m,n should be represented in a tuple in the future.
     """
     index_comb = combinations(range(len(pandasArray.index)), m)
-    column_comb = combinations(range(len(pandasArray.columns)), n)
+    if seq_addition:
+        column_comb = permutations(range(len(pandasArray.columns)), n)
+    else:
+        column_comb = combinations(range(len(pandasArray.columns)), n)
     index_column_prod = product(index_comb, column_comb)
     return index_column_prod
 
@@ -84,6 +88,30 @@ def check_RMSs_from_submatrix(submatrix):
     '''
     identityMat = np.eye(submatrix.shape[0])
     submatrix_normd = normalize_vectors(submatrix)
+    orthog_submatrix = submatrix_normd.dot(submatrix_normd.T)
+    result = RMS_identity(orthog_submatrix, identityMat)
+
+    return result
+
+
+def check_RMSs_with_seq_addn(submatrix):
+    '''
+    Takes a submatrix and returns the rmsd from the identity matrix. Defines the
+    order of addition as the order that the column indicies are provided. To be
+    used in conjunction with every_matrix( ,seq_addition=True).
+
+    TODO: Check whether generating a new identity matrix every time is costly.
+    '''
+    identityMat = np.eye(submatrix.shape[0])
+    # simulate sequential addition
+    new_matrix = np.empty(submatrix.shape)
+    new_matrix[:, 0] = submatrix[:, 0]
+    c = 1
+    while c < submatrix.shape[0]:
+        new_matrix[:, c] = submatrix[:, c] + new_matrix[:, c - 1]
+        c += 1
+    # continue with orthogonality calculation
+    submatrix_normd = normalize_vectors(new_matrix)
     orthog_submatrix = submatrix_normd.dot(submatrix_normd.T)
     result = RMS_identity(orthog_submatrix, identityMat)
 
