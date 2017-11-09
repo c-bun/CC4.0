@@ -30,6 +30,8 @@ def every_matrix(m, n, pandasArray):
     """
     Accepts a pandas dataframe and returns an iterator with every possible
     combination of m rows and n columns via an iterator object.
+
+    The iterator will yield tuples of the form: ((m1, m2,...),(n1, n2,...)).
     """
     index_comb = combinations(range(len(pandasArray.index)), m)
     column_comb = combinations(range(len(pandasArray.columns)), n)
@@ -49,19 +51,23 @@ def get_submatrix(full_data, combination_tuple):
 def RMS_identity(arr, identityMat):
     """
     Returns the average RMS error of the given matrix from the identity matrix.
+    Inputs should be numpy arrays.
     """
     square_distance = np.power((arr - identityMat), 2)
     return np.sqrt(np.mean(square_distance))
 
 
 def normalize_vectors(pandasArray):
+    '''
+    Normalizes along matrix columns.
+    '''
     return pandasArray / norm(pandasArray, axis=0)
 
 
 def check_RMSs(submatrix_indicies, full_data, identityMat):
     '''
     Takes a tuple of the required indicies and the full matrix of data.
-    Gets the rms and returns the RMS of the identity matrix as a scalar.
+    Gets the rms and returns the RMSD from the identity matrix as a scalar.
     '''
     submatrix = get_submatrix(full_data, submatrix_indicies)
     submatrix_normd = normalize_vectors(submatrix)
@@ -72,6 +78,7 @@ def check_RMSs(submatrix_indicies, full_data, identityMat):
 
 
 def get_rms_from_combination(combination, full_data, threshold, identityMat):
+    # TODO This method can be merged with iterate_RMSs.
     rms = check_RMSs(combination, full_data, identityMat)
     if rms < threshold:
         return (rms, combination)
