@@ -19,6 +19,9 @@ from itertools import chain, repeat, combinations, product
 def clean_raw_data(pdarray):
     """
     Modifies pdarray in place to set any value below 1E3 to 1E3.
+
+    This step is necessary for screening luciferases, but may not be needed for
+    other applications.
     """
     for flux_value in np.nditer(pdarray, op_flags=['readwrite']):
         if flux_value < 1000:
@@ -77,13 +80,6 @@ def check_RMSs(submatrix_indicies, full_data, identityMat):
     return result
 
 
-def get_rms_from_combination(combination, full_data, threshold, identityMat):
-    # TODO This method can be merged with iterate_RMSs.
-    rms = check_RMSs(combination, full_data, identityMat)
-    if rms < threshold:
-        return (rms, combination)
-
-
 def iterate_RMSs(list_to_process, full_data, identityMat, threshold=1):
     '''
     Takes a list of tuples of columns and rows to process and the full data
@@ -93,18 +89,17 @@ def iterate_RMSs(list_to_process, full_data, identityMat, threshold=1):
     '''
     result_list = []
     for combination in list_to_process:
-        result = get_rms_from_combination(
-            combination, full_data, threshold, identityMat)
-        if result is not None:
-            result_list.append(result)
+        rms = check_RMSs(combination, full_data, identityMat)
+        if rms < threshold:
+            result_list.append((rms, combination))
 
-    # result_list = [get_rms_from_combination(
-    # combination, full_data, threshold, identityMat) for combination in
-    # list_to_process]
     return result_list
 
 
 def o_score(rms, shape=(2, 2)):
+    '''
+    Convert an RMSD score to a more human-readable orthogonality score.
+    '''
     worst = np.ones(shape)
     worst_RMS = RMS_identity(worst, np.eye(shape[0]))
     return 2 * (worst_RMS / rms)

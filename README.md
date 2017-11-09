@@ -30,7 +30,7 @@ Data must be formatted as a ``.csv`` file with row 1 as column headings, and col
 **Running your ``.csv``:**  
 After forking, cloning, or downloading the repository, navigate to the folder containing the source files using the terminal.
 
-On mac/linux: ``cd path/to/CC4.0``
+On mac/linux: ``cd path/to/CrossCompare``
 
 A basic run can be achieved by specifying only the input and output filenames with the ``-i`` and ``-o`` tags respectively.
 
@@ -48,12 +48,9 @@ The script will print what it is doing into the terminal and create a ``.csv`` i
 ``[-t THRESHOLD]`` RMS threshold to keep for the sorted list. Specifying this tag is often necessary for larger searches (>2 dimensions or larger datasets) to reduce memory usage. Setting this to 0.15 reduced our memory usage adequately. Default: 1.
 
 **Optimizing Memory Use:**
-``[-b BUFFER_LENGTH]`` Only important with large datasets. Use to adjust the length of the list that is split among the processors. If using many processors, increase this number. If low on RAM, decrease this number. A value of 1,000,000 works well with 32--64 processors. Default: 1000000.
+``[-b BUFFER_LENGTH]`` Only important with large datasets. Use to adjust the length of the list that is split among the processors. If using many processors, increase this number. If low on RAM, decrease this number. A value of 1,000,000 works well with 16 processors. Default: 1000000.
 
 **Example input:**  
 For a 3 dimensional run with a file called ``dataset.csv``, on a computer with 8 cores, one may use:
 
 ``python3 run_OSF.py -i "dataset.csv" -o "dataset_out.csv" -d 3 -t 0.1 -p 8``
-
-### 04/10/2017 Update
-Added the ability to search for dimensions >2 much faster. Documentation coming in the future for these features.
