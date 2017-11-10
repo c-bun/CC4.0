@@ -88,9 +88,15 @@ if not args.time_testing:
                                         args.threshold))
 try:
     full_data = pd.read_csv(args.input, index_col=0, dtype='float64')
-except:
-    print("Something went wrong with the import of {}."
+except FileNotFoundError:
+    print("Could not find the file in the specified path: {}. "
           "Please check the file/path.".format(args.input))
+except ValueError:
+    print("A value in the CSV file was not recognised. Only numbers as floats"
+          "or in scientific notation can be processed.")
+except IndexError:
+    print("It looks like you input matrix is not rectangular. Check for"
+          " extraneous commas in the .csv file.")
     raise
 starttime = datetime.now()
 if not args.time_testing:
