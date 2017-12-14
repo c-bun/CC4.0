@@ -4,6 +4,7 @@ https://sukhbinder.wordpress.com/2014/12/25/an-example-of-model-view-controller-
 '''
 
 import tkinter as Tk
+from tkinter import messagebox
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
@@ -17,7 +18,7 @@ class Model():
 
     def __init__(self):
         self.df = None
-        self.result = None
+        self.resultDf = None
 
     def run_CC(self):
         # TODO guts for running CC here.
@@ -31,6 +32,7 @@ class Model():
             print("Something went wrong with the import of {}."
                   "Please check the file/path.".format(filename))
             raise
+        self.df = df
         return df
 
 
@@ -106,6 +108,7 @@ class Controller():
         self.view = View(self.root)
         self.view.load_button.bind('<Button>', self.loaddf)
         self.view.run_button.bind('<Button>', self.runOSF)
+        self.view.save_button.bind('<Button>', self.saveResult)
         # self.view.sidepanel.plotBut.bind("<Button>", self.my_plot)
         # self.view.sidepanel.clearButton.bind("<Button>", self.clear)
 
@@ -114,8 +117,12 @@ class Controller():
             # initialdir='./', title='Select CSV', filetypes=(('CSV files',
             # '*.csv')))
             initialdir='./', title='Select a CSV')
-        df = self.model.open_CSV(filename)
-        self.model.df = df  # TODO should actually store/be operated on in the Model class?
+        try:
+            df = self.model.open_CSV(filename)
+        except:
+            messagebox.showerror(
+                "Open file", "Something went wrong with the import of {}.".format(filename))
+            raise
 
         self.view.pathBox.delete("1.0", Tk.END)
         self.view.pathBox.insert(Tk.END, filename)
@@ -136,6 +143,20 @@ class Controller():
             self.view.resultBox.delete("1.0", Tk.END)
             self.view.resultBox.insert(Tk.END, "processes: {} dimensions: {}".format(
                 self.view.processEntry.get(), self.view.dimensionEntry.get()))
+
+    def saveResult(self, event):
+        if self.model.resultDf is None:
+            messagebox.showwarning(
+                "No data to save.", "You must first run an analysis.")
+        else:
+            savePath = Tk.filedialog.asksaveasfilename(
+                initialdir='./', title='Select a save location.')
+            try:
+                self.model.resultDf.to_csv(savePath, index=False)
+            except:
+                messagebox.showerror(
+                    "Save file", "Something went wrong when saving {}.".format(savePath))
+                raise
 
     def run(self):
         self.root.title("CrossCompare")
