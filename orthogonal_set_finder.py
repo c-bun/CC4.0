@@ -14,9 +14,67 @@ import numpy as np
 from numpy import mean, sqrt, eye
 from numpy.linalg import norm
 from itertools import chain, repeat, combinations, product, permutations
-import matplotlib.pyplot as plt
+from multiprocessing import Pool
 
-plt.rcParams.update({'legend.fontsize': 6})  # make legends format smaller
+# import matplotlib.pyplot as plt
+# plt.rcParams.update({'legend.fontsize': 6})  # make legends format smaller
+
+
+def buffer_generator(generator, buffer_length):
+    '''
+    Generator to buffer a longer generator into chunks that can be distributed
+    to child processes.
+    '''
+    more_values = True  # So long as generator starts out with values.
+    while more_values:
+        sublist = []
+        for c in range(buffer_length):
+            try:
+                sublist.append(next(generator))
+            except StopIteration:
+                more_values = False
+        yield sublist
+
+
+def check_RMSs_from_submatrix(submatrix):
+    '''
+    Takes a submatrix and returns the rmsd from the identity matrix.
+
+    TODO: Check whether generating a new identity matrix every time is costly.
+    '''
+    identityMat = np.eye(submatrix.shape[0])
+    submatrix_normd = normalize_vectors(submatrix)
+    orthog_submatrix = submatrix_normd.dot(submatrix_normd.T)
+    result = RMS_identity(orthog_submatrix, identityMat)
+
+    return result
+
+
+def run_multiprocess(full_data, dimension, fxn=check_RMSs_from_submatrix,
+                     numProcesses=2, threshold=1, buffer_length=1000000,
+                     seq_addition=False):
+    '''
+    Method to run OSF search in multiple processes simultaneously.
+    '''
+    # if __name__ == '__main__':
+    if __name__ == 'orthogonal_set_finder':
+        print('trying to run...')
+        if seq_addition:
+            fxn = check_RMSs_with_seq_addn
+        buffer_list = buffer_generator(every_matrix(
+            dimension[0], dimension[1], full_data, seq_addition=seq_addition), buffer_length)
+        pool = Pool(processes=numProcesses)
+        #identityMat = np.eye(dimension)
+        full_data_np = full_data.values
+        compiled_chunks = []
+        for chunk in buffer_list:
+            list_of_combinations = [chunk[i::numProcesses] for i in range(
+                numProcesses)]
+            result_list = pool.starmap(iterate_with_fxn, zip(
+                list_of_combinations, repeat(full_data_np.copy()), repeat(fxn)))
+            merged_pool = list(chain.from_iterable(result_list))
+            compiled_chunks.extend(merged_pool)
+        return sorted(compiled_chunks, key=lambda x: x[0])
 
 
 def clean_raw_data(pdarray):
@@ -73,20 +131,6 @@ def check_RMSs(submatrix_indicies, full_data, identityMat):
     Gets the rms and returns the RMS of the identity matrix as a scalar.
     '''
     submatrix = get_submatrix(full_data, submatrix_indicies)
-    submatrix_normd = normalize_vectors(submatrix)
-    orthog_submatrix = submatrix_normd.dot(submatrix_normd.T)
-    result = RMS_identity(orthog_submatrix, identityMat)
-
-    return result
-
-
-def check_RMSs_from_submatrix(submatrix):
-    '''
-    Takes a submatrix and returns the rmsd from the identity matrix.
-
-    TODO: Check whether generating a new identity matrix every time is costly.
-    '''
-    identityMat = np.eye(submatrix.shape[0])
     submatrix_normd = normalize_vectors(submatrix)
     orthog_submatrix = submatrix_normd.dot(submatrix_normd.T)
     result = RMS_identity(orthog_submatrix, identityMat)

@@ -4,53 +4,8 @@ Runs OSF search in the terminal. Requires the orthogonal_set_finder.py file.
 from orthogonal_set_finder import *
 import argparse
 from datetime import datetime
-import pandas as pd
-import numpy as np
-from multiprocessing import Pool
-from itertools import repeat, chain
 from sys import getsizeof
 import pickle
-
-
-def buffer_generator(generator, buffer_length):
-    '''
-    Generator to buffer a longer generator into chunks that can be distributed
-    to child processes.
-    '''
-    more_values = True  # So long as generator starts out with values.
-    while more_values:
-        sublist = []
-        for c in range(buffer_length):
-            try:
-                sublist.append(next(generator))
-            except StopIteration:
-                more_values = False
-        yield sublist
-
-
-def run_multiprocess(full_data, dimension, fxn=check_RMSs_from_submatrix,
-                     numProcesses=2, threshold=1, buffer_length=1000000,
-                     seq_addition=False):
-    '''
-    Method to run OSF search in multiple processes simultaneously.
-    '''
-    if __name__ == '__main__':
-        if seq_addition:
-            fxn = check_RMSs_with_seq_addn
-        buffer_list = buffer_generator(every_matrix(
-            dimension[0], dimension[1], full_data, seq_addition=seq_addition), buffer_length)
-        pool = Pool(processes=numProcesses)
-        #identityMat = np.eye(dimension)
-        full_data_np = full_data.values
-        compiled_chunks = []
-        for chunk in buffer_list:
-            list_of_combinations = [chunk[i::numProcesses] for i in range(
-                numProcesses)]
-            result_list = pool.starmap(iterate_with_fxn, zip(
-                list_of_combinations, repeat(full_data_np.copy()), repeat(fxn)))
-            merged_pool = list(chain.from_iterable(result_list))
-            compiled_chunks.extend(merged_pool)
-        return sorted(compiled_chunks, key=lambda x: x[0])
 
 
 #################################################################

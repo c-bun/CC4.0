@@ -9,9 +9,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 import pandas as pd
-# TODO importing this will run it. need to put multiprocess call in
-# orthogonal_set_finder file??
-#from run_OSF import *
+from orthogonal_set_finder import *
 
 
 class Model():
@@ -19,16 +17,20 @@ class Model():
     def __init__(self):
         self.df = None
         self.resultDf = None
+        self.dimension = (2, 2)
+        self.processes = 2
+        self.seq_addition = False
 
     def run_CC(self):
-        # TODO guts for running CC here.
-        return None
+        self.resultDf = run_multiprocess(
+            self.df, self.dimension, numProcesses=self.processes, seq_addition=self.seq_addition)
+        print('Done!: {}'.format(self.resultDf[:10]))
+        return self.resultDf
 
     def open_CSV(self, filename):
         try:
             df = pd.read_csv(filename, index_col=0)
         except:
-            # TODO this should be a dialog box?
             print("Something went wrong with the import of {}."
                   "Please check the file/path.".format(filename))
             raise
@@ -93,7 +95,6 @@ class View():
         # Area for save and close buttons
         self.save_button = Tk.Button(master, text="Save As")
         self.save_button.grid(row=4, column=1)
-        # TODO add events for this
 
         self.close_button = Tk.Button(
             master, text="Close", command=master.quit)
@@ -134,15 +135,9 @@ class Controller():
             # TODO this should be a dialog.
             print("you must first load a CSV file.")
         else:
-            print('runs OSF here.')
-            # result = run_multiprocess(self.df, (2, 2),
-            #                           numProcesses=2,
-            #                           threshold=1,
-            #                           buffer_length=1000000, fxn=check_RMSs_from_submatrix)
-            # self.view.resultDF.insert(Tk.END, str(result))
+            result = self.model.run_CC()
             self.view.resultBox.delete("1.0", Tk.END)
-            self.view.resultBox.insert(Tk.END, "processes: {} dimensions: {}".format(
-                self.view.processEntry.get(), self.view.dimensionEntry.get()))
+            self.view.resultBox.insert(Tk.END, str(result[:10]))
 
     def saveResult(self, event):
         if self.model.resultDf is None:
@@ -152,6 +147,7 @@ class Controller():
             savePath = Tk.filedialog.asksaveasfilename(
                 initialdir='./', title='Select a save location.')
             try:
+                # FIXME resultDf is a list, not a pd df. Need to fix that.
                 self.model.resultDf.to_csv(savePath, index=False)
             except:
                 messagebox.showerror(
