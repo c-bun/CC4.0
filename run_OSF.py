@@ -3,6 +3,7 @@ Runs OSF search in the terminal. Requires the orthogonal_set_finder.py file.
 '''
 from orthogonal_set_finder import *
 import argparse
+import json
 from datetime import datetime
 import pandas as pd
 from multiprocessing import Pool
@@ -54,11 +55,13 @@ def main():
     # setup parser for accepting arguments from the bash shell
     parser = argparse.ArgumentParser(
         description='Multi-process(core) orthogonal set finder.')
+    parser.add_argument('-c', '--config_file',
+                        help='JSON file containing input configuration.', default=None)
     parser.add_argument('-i', '--input',
                         help='Input file name as .csv. Compounds in columns,'
-                        'mutants in rows.', required=True)
+                        'mutants in rows.')
     parser.add_argument('-o', '--output',
-                        help='Output file name as .csv', required=True)
+                        help='Output file name as .csv')
     parser.add_argument('-d', '--dimension',
                         help='Dimension of search. Default: 2.', default=2,
                         type=int)
@@ -79,24 +82,27 @@ def main():
     parser.add_argument('-e', '--time_testing',
                         help='Use to test speed of algorithm. Restricts printed'
                         ' and csv output. default: off', action='store_true')
-    args = parser.parse_args()
+    args = vars(parser.parse_args())
     #################################################################
-
+    if args["config_file"] != None:
+        conf = json.load(open(args["config_file"]))
+    else:
+        conf = args
     # run the script printing start and end times and the top five hits at the
     # end.
-    if not args.time_testing:
+    if not conf["time_testing"]:
         print('Running a {}x{} matrix search on {} with {} process(es).'
-              'Threshold set to {}.'.format(args.dimension, args.dimension,
-                                            args.input, args.processes,
-                                            args.threshold))
+              'Threshold set to {}.'.format(conf["dimension"], conf["dimension"],
+                                            conf["input"], conf["processes"],
+                                            conf["threshold"]))
     try:
-        full_data = pd.read_csv(args.input, index_col=0, dtype='float64')
+        full_data = pd.read_csv(conf["input"], index_col=0, dtype='float64')
     except FileNotFoundError:
         print("Could not find the file in the specified path: {}. "
-              "Please check the file/path.".format(args.input))
+              "Please check the file/path.".format(conf["input"]))
         return 0
     except ValueError:
-        print("A value in the CSV file was not recognised. Only numbers as floats"
+        print("A value in the CSV file was not recognised. Only numbers as floats "
               "or in scientific notation can be processed.")
         return 0
     except IndexError:
@@ -105,30 +111,30 @@ def main():
         return 0
     #    raise
     starttime = datetime.now()
-    if not args.time_testing:
+    if not conf["time_testing"]:
         print('Start time: {}'.format(starttime.isoformat()))
     # prep the raw data for processing:
     full_data.index = full_data.index.map(int)  # Allows m numbers to
     # format properly.
     clean_raw_data(full_data)  # Set everything below 1E3 to 1E3.
     # Start the algorithm.
-    result = run_multiprocess(full_data, args.dimension,
-                              numProcesses=args.processes,
-                              threshold=args.threshold,
-                              buffer_length=args.buffer_length)
+    result = run_multiprocess(full_data, conf["dimension"],
+                              numProcesses=conf["processes"],
+                              threshold=conf["threshold"],
+                              buffer_length=conf["buffer_length"])
     endtime = datetime.now()
-    if not args.time_testing:
+    if not conf["time_testing"]:
         print("Done! Top five hits:")
         print(result[:5])
         print("I found {} combinations.".format(str(len(result))))
         print('End time: {}'.format(endtime.isoformat()))
     print('Total calculation time: {}'.format(str(endtime - starttime)))
 
-    if not args.time_testing:
+    if not conf["time_testing"]:
         format_OSF(result, full_data,
-                   list_len=args.length).to_csv(args.output,
-                                                index=False)  # Write out result.
-        print('Result saved to {}'.format(args.output))
+                   list_len=conf["length"]).to_csv(conf["output"],
+                                                   index=False)  # Write out result.
+        print('Result saved to {}'.format(conf["output"]))
     return 1
 
 

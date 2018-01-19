@@ -1,0 +1,10 @@
+{
+  "input": "./sample_data/terminal_test.csv",
+  "output": "./sample_data/terminal_test_result.csv",
+  "dimension": 2,
+  "processes": 1,
+  "length": 10000,
+  "threshold": 0.15,
+  "buffer_length": 1000000,
+  "time_testing": false
+}
