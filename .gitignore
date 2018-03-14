@@ -12,6 +12,7 @@
 __pycache__/
 
 #Files and Paths
+runs/
 rescreen/
 misc_scratch_data/
 .ipynb_checkpoints/
