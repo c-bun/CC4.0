@@ -38,6 +38,12 @@ On mac/linux: ``python3 run_OSF.py -i "name of your.csv" -o "name of your desire
 
 The script will print what it is doing into the terminal and create a ``.csv`` in the current path with the specified file name.
 
+To keep track of your runs, and to minimize typing in the terminal, I also added JSON parsing functionality. Instead of all those pesky commands and flags, just specify the path to your config file that contains all the necessary information.
+
+``python3 run_OSF.py -c config.json``
+
+See the ``config.json`` file for how to format. If you want to test if things are working, the config file included should run the sample data.
+
 **Other options for customizing the script output:**  
 ``[-d DIMENSION]`` Optional tag to specify the number of dimensions to use in the search. The default is 2. Using greater than 2 dimensions on large (>500 entry) datasets could take a considerable amount of time.
 
@@ -49,6 +55,8 @@ The script will print what it is doing into the terminal and create a ``.csv`` i
 
 **Optimizing Memory Use:**
 ``[-b BUFFER_LENGTH]`` Only important with large datasets. Use to adjust the length of the list that is split among the processors. If using many processors, increase this number. If low on RAM, decrease this number. A value of 1,000,000 works well with 16 processors. Default: 1000000.
+
+*04/2018*: It looks like the ``BUFFER_LENGTH`` parameter still does not solve the memory issue because results pile up in a single process as the script runs; with enough result, things will crash. I'm still working on a solution to this, but in the mean time, we are using the ``subsample.py`` script to get subsamples of our matricies to make the computation a bit shorter.
 
 **Example input:**  
 For a 3 dimensional run with a file called ``dataset.csv``, on a computer with 8 cores, one may use:
